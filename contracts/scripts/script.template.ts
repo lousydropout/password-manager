@@ -9,7 +9,7 @@ const chainId = process.env.CHAIN || 'development'
 dotenv.config({ path: `.env.${chainId}` })
 
 /**
- * Example script that updates & reads a message from a greeter contract.
+ * Example script that updates & reads a message from a password manager contract.
  * Can be used as a template for other scripts.
  *
  * Parameters:
@@ -25,23 +25,23 @@ const main = async () => {
   const accountUri = process.env.ACCOUNT_URI || '//Alice'
   const { api, chain, account } = await initPolkadotJs(chainId, accountUri)
 
-  // Deploy greeter contract
-  const { abi, wasm } = await getDeploymentData('greeter')
+  // Deploy password manager contract
+  const { abi, wasm } = await getDeploymentData('password_manager')
   const { address } = await deployContract(api, account, abi, wasm, 'default', [])
   const contract = new ContractPromise(api, abi, address)
 
   // Update message
   try {
-    await contractTx(api, account, contract, 'set_message', {}, ['Hello, script!'])
-    console.log('\nSuccessfully updated greeting')
+    await contractTx(api, account, contract, 'set_number_of_keys', {}, [17])
+    console.log('\nSuccessfully updated password manager')
   } catch (error) {
-    console.error('Error while updating greeting', error)
+    console.error('Error while updating password manager', error)
   }
 
   // Read message
-  const result = await contractQuery(api, '', contract, 'greet')
-  const { decodedOutput } = decodeOutput(result, contract, 'greet')
-  console.log('\nQueried greeting:', decodedOutput)
+  const result = await contractQuery(api, '', contract, 'number_of_keys')
+  const { decodedOutput } = decodeOutput(result, contract, 'number_of_keys')
+  console.log('\nQueried password manager:', decodedOutput)
 }
 
 main()

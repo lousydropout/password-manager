@@ -4,7 +4,7 @@
   "private": true,
   "version": "0.1.3",
   "scripts": {
-    "postinstall": "echo \"Creating empty 'development.ts' it does not exist…\" && [[ ! -e deployments/greeter/development.ts ]] && (command -v touch &> /dev/null && touch deployments/greeter/development.ts || copy /b deployments/greeter/development.ts +,,); true",
+    "postinstall": "echo \"Creating empty 'development.ts' it does not exist…\" &&  (command -v touch &> /dev/null && touch deployments/password_manager/development.ts || copy /b deployments/password_manager/development.ts +,,); true",
     "test": "./test-all.sh",
     "build": "./build-all.sh",
     "node": "substrate-contracts-node --dev",

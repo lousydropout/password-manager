@@ -11,7 +11,7 @@ dotenv.config({
 })
 
 /**
- * Script that deploys the greeter contract and writes its address to a file.
+ * Script that deploys the password manager contract and writes its address to a file.
  *
  * Parameters:
  *  - `DIR`: Directory to read contract build artifacts (optional, defaults to `./deployments`)
@@ -26,13 +26,14 @@ const main = async () => {
   const accountUri = process.env.ACCOUNT_URI || '//Alice'
   const { api, chain, account } = await initPolkadotJs(chainId, accountUri)
 
-  // Deploy greeter contract
-  const { abi, wasm } = await getDeploymentData('greeter')
-  const greeter = await deployContract(api, account, abi, wasm, 'default', [])
+  // Deploy password manager contract
+  const { abi, wasm } = await getDeploymentData('password_manager')
+  console.log('abi: ', abi)
+  const password_manager = await deployContract(api, account, abi, wasm, 'default', [])
 
   // Write contract addresses to `{contract}/{network}.ts` file(s)
   await writeContractAddresses(chain.network, {
-    greeter,
+    password_manager,
   })
 }
 

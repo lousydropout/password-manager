@@ -22,14 +22,14 @@ function MyApp({ Component, pageProps }: AppProps) {
       <DefaultSeo
         dangerouslySetAllPagesToNoFollow={!env.isProduction}
         dangerouslySetAllPagesToNoIndex={!env.isProduction}
-        defaultTitle="ink!athon" // TODO
-        titleTemplate="%s | ink!athon" // TODO
-        description="Substrate-based Smart Contract & DApp Development Boilerplate" // TODO
+        defaultTitle="Password Manager"
+        titleTemplate="%s | Password Manager"
+        description="A password manager on a blockchain"
         openGraph={{
           type: 'website',
           locale: 'en',
           url: env.url,
-          site_name: 'ink!athon', // TODO
+          site_name: 'Password Manager',
           images: [
             {
               url: `${env.url}/images/cover.jpg`, // TODO
@@ -37,9 +37,6 @@ function MyApp({ Component, pageProps }: AppProps) {
               height: 675,
             },
           ],
-        }}
-        twitter={{
-          handle: '@scio_xyz', // TODO
         }}
       />
 
@@ -55,7 +52,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       </Head>
 
       <UseInkathonProvider
-        appName="ink!athon" // TODO
+        appName="Password Manager"
         connectOnInit={true}
         defaultChain={env.defaultChain}
         deployments={getDeployments()}

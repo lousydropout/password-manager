@@ -2,7 +2,7 @@ import { HomePageTitle } from '@/components/home/HomePageTitle'
 import { CenterBody } from '@/components/layout/CenterBody'
 import { ChainInfo } from '@/components/web3/ChainInfo'
 import { ConnectButton } from '@/components/web3/ConnectButton'
-import { GreeterContractInteractions } from '@/components/web3/GreeterContractInteractions'
+import { PasswordManagerContractInteractions } from '@/components/web3/PasswordManagerContractInteractions'
 import { useInkathon } from '@scio-labs/use-inkathon'
 import type { NextPage } from 'next'
 import { useEffect } from 'react'
@@ -17,9 +17,6 @@ const HomePage: NextPage = () => {
     toast.error(error.message)
   }, [error])
 
-  const address = activeAccount?.address
-  console.log('address: ', address)
-
   return (
     <>
       <CenterBody tw="mt-20 mb-10 px-5">
@@ -33,8 +30,8 @@ const HomePage: NextPage = () => {
           {/* Chain Metadata Information */}
           <ChainInfo />
 
-          {/* Greeter Read/Write Contract Interactions */}
-          <GreeterContractInteractions />
+          {/* Password Manager Read/Write Contract Interactions */}
+          <PasswordManagerContractInteractions />
         </div>
       </CenterBody>
     </>

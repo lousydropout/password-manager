@@ -28,7 +28,6 @@ const main = async () => {
 
   // Deploy password manager contract
   const { abi, wasm } = await getDeploymentData('password_manager')
-  console.log('abi: ', abi)
   const password_manager = await deployContract(api, account, abi, wasm, 'default', [])
 
   // Write contract addresses to `{contract}/{network}.ts` file(s)

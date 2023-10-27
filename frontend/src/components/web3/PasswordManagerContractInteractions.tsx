@@ -15,7 +15,7 @@ import 'twin.macro'
 type UpdateNumberValues = { number: number }
 
 export const PasswordManagerContractInteractions: FC = () => {
-  const { api, activeAccount, activeSigner } = useInkathon()
+  const { api, accounts, activeAccount, activeSigner } = useInkathon()
   const { contract, address: contractAddress } = useRegisteredContract(ContractIds.PasswordManager)
   const [number, setNumber] = useState<number>()
   const [fetchIsLoading, setFetchIsLoading] = useState<boolean>()
@@ -48,7 +48,7 @@ export const PasswordManagerContractInteractions: FC = () => {
 
   useEffect(() => {
     fetchNumber()
-  }, [contract])
+  }, [contract, activeAccount])
 
   // Update Number
   const updateNumber = async ({ number }: UpdateNumberValues) => {

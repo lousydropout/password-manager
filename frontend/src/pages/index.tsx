@@ -1,5 +1,4 @@
 import { HomePageTitle } from '@/components/home/HomePageTitle'
-import { HomeTopBar } from '@/components/home/HomeTopBar'
 import { CenterBody } from '@/components/layout/CenterBody'
 import { ChainInfo } from '@/components/web3/ChainInfo'
 import { ConnectButton } from '@/components/web3/ConnectButton'
@@ -12,17 +11,17 @@ import 'twin.macro'
 
 const HomePage: NextPage = () => {
   // Display `useInkathon` error messages (optional)
-  const { error } = useInkathon()
+  const { activeAccount, error } = useInkathon()
   useEffect(() => {
     if (!error) return
     toast.error(error.message)
   }, [error])
 
+  const address = activeAccount?.address
+  console.log('address: ', address)
+
   return (
     <>
-      {/* Top Bar */}
-      <HomeTopBar />
-
       <CenterBody tw="mt-20 mb-10 px-5">
         {/* Title */}
         <HomePageTitle />

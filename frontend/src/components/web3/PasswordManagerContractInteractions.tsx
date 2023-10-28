@@ -15,12 +15,13 @@ import 'twin.macro'
 type UpdateNumberValues = { number: number }
 
 export const PasswordManagerContractInteractions: FC = () => {
-  const { api, accounts, activeAccount, activeSigner } = useInkathon()
+  const { api, activeAccount, activeSigner } = useInkathon()
   const { contract, address: contractAddress } = useRegisteredContract(ContractIds.PasswordManager)
   const [number, setNumber] = useState<number>()
   const [fetchIsLoading, setFetchIsLoading] = useState<boolean>()
   const [updateIsLoading, setUpdateIsLoading] = useState<boolean>()
   const { register, reset, handleSubmit } = useForm<UpdateNumberValues>()
+
   // Fetch Number
   const fetchNumber = async () => {
     if (!contract || !api) return

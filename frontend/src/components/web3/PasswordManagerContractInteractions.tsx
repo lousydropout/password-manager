@@ -1,6 +1,6 @@
 import { ContractIds } from '@/deployments/deployments'
 import { contractTxWithToast } from '@/utils/contractTxWithToast'
-import { Button, Card, FormControl, FormLabel, Input, Stack } from '@chakra-ui/react'
+import { Button, Card, Flex, FormControl, FormLabel, Input, Stack, Text } from '@chakra-ui/react'
 import {
   contractQuery,
   decodeOutput,
@@ -15,6 +15,8 @@ import 'twin.macro'
 type UpdateNumberValues = { number: number }
 
 export const PasswordManagerContractInteractions: FC = () => {
+  const [enteredPassword, setEnteredPassword] = useState<boolean>(false)
+  const [password, setPassword] = useState<string>()
   const { api, activeAccount, activeSigner } = useInkathon()
   const { contract, address: contractAddress } = useRegisteredContract(ContractIds.PasswordManager)
   const [number, setNumber] = useState<number>()
@@ -28,13 +30,13 @@ export const PasswordManagerContractInteractions: FC = () => {
 
     setFetchIsLoading(true)
     try {
-      const result = await contractQuery(api, '', contract, 'numberOfKeysOfAccount', {}, [
+      const result = await contractQuery(api, '', contract, 'numberOfPasswordsOfAccount', {}, [
         activeAccount?.address,
       ])
       const { output, isError, decodedOutput } = decodeOutput(
         result,
         contract,
-        'numberOfKeysOfAccount',
+        'numberOfPasswordsOfAccount',
       )
       if (isError) throw new Error(decodedOutput)
       setNumber(output)
@@ -61,7 +63,7 @@ export const PasswordManagerContractInteractions: FC = () => {
     // Send transaction
     setUpdateIsLoading(true)
     try {
-      await contractTxWithToast(api, activeAccount.address, contract, 'setNumberOfKeys', {}, [
+      await contractTxWithToast(api, activeAccount.address, contract, 'setNumberOfPasswords', {}, [
         number,
       ])
       reset()
@@ -79,6 +81,19 @@ export const PasswordManagerContractInteractions: FC = () => {
     <>
       <div tw="flex grow flex-col space-y-4 max-w-[20rem]">
         <h2 tw="text-center font-mono text-gray-400">Password Manager Smart Contract</h2>
+
+        {/* Enter Password */}
+        {!enteredPassword && (
+          <Card variant="outline" p={4} bgColor="whiteAlpha.100">
+            <Text mb={2}>Enter Master Password</Text>
+            <Flex direction={'row'} gap={2}>
+              <Input type="password" onChange={(e) => setPassword(e.target.value)} />
+              <Button colorScheme="purple" onClick={(e) => setEnteredPassword(true)}>
+                Submit
+              </Button>
+            </Flex>
+          </Card>
+        )}
 
         {/* Fetched Number */}
         <Card variant="outline" p={4} bgColor="whiteAlpha.100">

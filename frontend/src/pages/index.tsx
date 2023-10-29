@@ -3,7 +3,8 @@ import { CenterBody } from '@/components/layout/CenterBody'
 import { ConnectButton } from '@/components/web3/ConnectButton'
 import { DisplayPasswords } from '@/components/web3/DisplayPasswords'
 import { PasswordManagerContractInteractions } from '@/components/web3/PasswordManagerContractInteractions'
-import { Button, Card, Flex, Input, Text } from '@chakra-ui/react'
+import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
+import { Button, Card, Flex, Input, InputGroup, InputRightElement, Text } from '@chakra-ui/react'
 import { useInkathon } from '@scio-labs/use-inkathon'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
@@ -12,9 +13,11 @@ import 'twin.macro'
 
 const HomePage: NextPage = () => {
   // Display `useInkathon` error messages (optional)
-  const { activeAccount, error } = useInkathon()
+  const { error } = useInkathon()
   const [enteredPassword, setEnteredPassword] = useState<boolean>(false)
+  const [tmpPassword, setTmpPassword] = useState<string>('')
   const [masterPassword, setMasterPassword] = useState<string>()
+  const [showPassword, setShowPassword] = useState<boolean>(false)
 
   useEffect(() => {
     if (!error) return
@@ -34,8 +37,26 @@ const HomePage: NextPage = () => {
         <Card variant="outline" p={4} my={4} bgColor="whiteAlpha.100">
           <Text mb={2}>Master Password</Text>
           <Flex direction={'row'} gap={2}>
-            <Input type="password" onChange={(e) => setMasterPassword(e.target.value)} />
-            <Button colorScheme="purple" onClick={(e) => setEnteredPassword(true)}>
+            <InputGroup size="md">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={tmpPassword}
+                onChange={(e) => setTmpPassword(e.target.value)}
+              />
+              <InputRightElement>
+                <Button size="sm" onClick={() => setShowPassword((value) => !value)}>
+                  {showPassword ? <ViewOffIcon /> : <ViewIcon />}
+                </Button>
+              </InputRightElement>
+            </InputGroup>
+
+            <Button
+              colorScheme="purple"
+              onClick={(e) => {
+                setMasterPassword(tmpPassword)
+                setEnteredPassword(true)
+              }}
+            >
               Update
             </Button>
           </Flex>

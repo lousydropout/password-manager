@@ -1,6 +1,5 @@
+import { PasswordCard } from '@/components/web3/PasswordCard'
 import { ContractIds } from '@/deployments/deployments'
-import { contractTxWithToast } from '@/utils/contractTxWithToast'
-import { Button, Card, FormControl, FormLabel, Input, Stack } from '@chakra-ui/react'
 import {
   contractQuery,
   decodeOutput,
@@ -8,32 +7,36 @@ import {
   useRegisteredContract,
 } from '@scio-labs/use-inkathon'
 import { FC, useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import 'twin.macro'
 
-type UpdateNumberValues = { number: number }
+type refetchPasswordValues = { n: number }
 type DisplayPasswordsProps = { masterPassword: string }
 
 export const DisplayPasswords: FC<DisplayPasswordsProps> = ({ masterPassword }) => {
   const { api, activeAccount, activeSigner } = useInkathon()
   const { contract, address: contractAddress } = useRegisteredContract(ContractIds.PasswordManager)
-  const [lastUpdated, setLastUpdated] = useState<number[]>()
+  const [lastUpdated, setLastUpdated] = useState<number[]>([])
   const [number, setNumber] = useState<number>()
+  const [encryptedTexts, setEncryptedTexts] = useState<string[]>([])
   const [fetchIsLoading, setFetchIsLoading] = useState<boolean>()
   const [updateIsLoading, setUpdateIsLoading] = useState<boolean>()
-  const { register, reset, handleSubmit } = useForm<UpdateNumberValues>()
 
   // Fetch Number
   const fetchNumber = async () => {
     if (!contract || !api) return
+    console.info('calling fetchNumber')
 
     setFetchIsLoading(true)
     try {
-      const result = await contractQuery(api, '', contract, 'getLastUpdated', {}, [
+      const getLastUpdatedResult = await contractQuery(api, '', contract, 'getLastUpdated', {}, [
         activeAccount?.address,
       ])
-      const { output, isError, decodedOutput } = decodeOutput(result, contract, 'getLastUpdated')
+      const { output, isError, decodedOutput } = decodeOutput(
+        getLastUpdatedResult,
+        contract,
+        'getLastUpdated',
+      )
       if (isError) throw new Error(decodedOutput)
       setLastUpdated(output)
       setNumber(output.length)
@@ -46,28 +49,60 @@ export const DisplayPasswords: FC<DisplayPasswordsProps> = ({ masterPassword }) 
     }
   }
 
+  const fetchPasswords = async () => {
+    if (!contract || !api) return
+
+    const val = [...Array(lastUpdated.length)].map(() => '')
+    setEncryptedTexts(val)
+
+    // query passwords
+    for (let number = 0; number < lastUpdated.length; number++) {
+      const result = await contractQuery(api, '', contract, 'password', {}, [
+        activeAccount?.address,
+        number,
+      ])
+      const { output, isError, decodedOutput } = decodeOutput(result, contract, 'password')
+      // if (isError) throw new Error(decodedOutput)
+      setEncryptedTexts((value) => {
+        const newVal = [...value]
+        newVal[number] = output
+        return newVal
+      })
+    }
+  }
+
   useEffect(() => {
     fetchNumber()
   }, [contract, activeAccount])
 
+  useEffect(() => {
+    fetchPasswords()
+  }, [lastUpdated])
+
   // Update Number
-  const updateNumber = async ({ number }: UpdateNumberValues) => {
+  const refetchPassword = async ({ n }: refetchPasswordValues) => {
     if (!activeAccount || !contract || !activeSigner || !api) {
       toast.error('Wallet not connected. Try again…')
       return
     }
 
     // Send transaction
-    setUpdateIsLoading(true)
     try {
-      await contractTxWithToast(api, activeAccount.address, contract, 'setNumberOfPasswords', {}, [
-        number,
+      const result = await contractQuery(api, '', contract, 'password', {}, [
+        activeAccount?.address,
+        n,
       ])
-      reset()
+      const { output } = decodeOutput(result, contract, 'password')
+      // if (isError) throw new Error(decodedOutput)
+      setEncryptedTexts((value) => {
+        const newValue = [...value]
+        newValue[n] = output
+        console.log('newValue: ', newValue)
+        return newValue
+      })
     } catch (e) {
       console.error(e)
     } finally {
-      setUpdateIsLoading(false)
       fetchNumber()
     }
   }
@@ -81,26 +116,16 @@ export const DisplayPasswords: FC<DisplayPasswordsProps> = ({ masterPassword }) 
           # passwords: {!contract ? 'Loading…' : number?.toString()}
         </h2>
 
-        {/* Update Number */}
-        <Card variant="outline" p={4} bgColor="whiteAlpha.100">
-          <form onSubmit={handleSubmit(updateNumber)}>
-            <Stack direction="row" spacing={2} align="end">
-              <FormControl>
-                <FormLabel>Update Number</FormLabel>
-                <Input disabled={updateIsLoading} {...register('number')} />
-              </FormControl>
-              <Button
-                type="submit"
-                mt={4}
-                colorScheme="purple"
-                isLoading={updateIsLoading}
-                disabled={updateIsLoading}
-              >
-                Submit
-              </Button>
-            </Stack>
-          </form>
-        </Card>
+        {/* Show passwords */}
+        {encryptedTexts?.map((encryptedText, n) => (
+          <PasswordCard
+            masterPassword={masterPassword}
+            encryptedText={encryptedText}
+            n={n}
+            key={n}
+            refetch={() => refetchPassword({ n })}
+          />
+        ))}
       </div>
     </>
   )

@@ -8,12 +8,12 @@ type PasswordCardProps = { masterPassword: string; ciphertext: string; iv: strin
 
 export const PasswordCard: FC<PasswordCardProps> = ({ masterPassword, ciphertext, iv }) => {
   const [decrypted, setDecrypted] = useState<DecryptedType>()
-  const [fetchIsLoading, setFetchIsLoading] = useState<boolean>()
-  const [fetchError, setFetchError] = useState<boolean>()
+  const [decryptionIsLoading, setDecryptionIsLoading] = useState<boolean>()
+  const [decryptionError, setDecryptionError] = useState<boolean>()
 
   const decryptJson = async (ciphertext: string) => {
-    setFetchIsLoading(true)
-    setFetchError(false)
+    setDecryptionIsLoading(true)
+    setDecryptionError(false)
     try {
       const decryptedString = await decrypt(ciphertext, iv, masterPassword)
       const decryptedObject = JSON.parse(decryptedString) as DecryptedType
@@ -21,9 +21,9 @@ export const PasswordCard: FC<PasswordCardProps> = ({ masterPassword, ciphertext
     } catch (e) {
       console.error(e)
       toast.error('Error while decrypting password. Try again…')
-      setFetchError(true)
+      setDecryptionError(true)
     } finally {
-      setFetchIsLoading(false)
+      setDecryptionIsLoading(false)
     }
   }
 
@@ -33,12 +33,12 @@ export const PasswordCard: FC<PasswordCardProps> = ({ masterPassword, ciphertext
 
   return (
     <Card maxW="sm">
-      {fetchError ? (
+      {decryptionError ? (
         <Alert status="error">
           <AlertIcon />
-          An error occurred while fetching data.
+          An error occurred while decryptioning data.
         </Alert>
-      ) : fetchIsLoading ? (
+      ) : decryptionIsLoading ? (
         <Skeleton height="100px" />
       ) : (
         <>

@@ -1,77 +1,52 @@
 import { ContractIds } from '@/deployments/deployments'
 import { contractTxWithToast } from '@/utils/contractTxWithToast'
-import { Button, Card, Flex, FormControl, FormLabel, Input, Stack, Text } from '@chakra-ui/react'
-import {
-  contractQuery,
-  decodeOutput,
-  useInkathon,
-  useRegisteredContract,
-} from '@scio-labs/use-inkathon'
-import { FC, useEffect, useState } from 'react'
+import { Button, Card, FormControl, FormLabel, Input, Textarea, VStack } from '@chakra-ui/react'
+import { useInkathon, useRegisteredContract } from '@scio-labs/use-inkathon'
+import { FC, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
+import { encrypt } from 'src/utils/crypto'
 import 'twin.macro'
 
-type UpdateNumberValues = { number: number }
+type PasswordMappingValues = {
+  url: string
+  username: string
+  password: string
+  description: string
+}
 
-export const PasswordManagerContractInteractions: FC = () => {
-  const [enteredPassword, setEnteredPassword] = useState<boolean>(false)
-  const [password, setPassword] = useState<string>()
+type DisplayPasswordsProps = { masterPassword: string }
+
+export const PasswordManagerContractInteractions: FC<DisplayPasswordsProps> = ({
+  masterPassword,
+}) => {
   const { api, activeAccount, activeSigner } = useInkathon()
   const { contract, address: contractAddress } = useRegisteredContract(ContractIds.PasswordManager)
-  const [number, setNumber] = useState<number>()
-  const [fetchIsLoading, setFetchIsLoading] = useState<boolean>()
   const [updateIsLoading, setUpdateIsLoading] = useState<boolean>()
-  const { register, reset, handleSubmit } = useForm<UpdateNumberValues>()
+  const { register, reset, handleSubmit } = useForm<PasswordMappingValues>()
 
-  // Fetch Number
-  const fetchNumber = async () => {
-    if (!contract || !api) return
-
-    setFetchIsLoading(true)
-    try {
-      const result = await contractQuery(api, '', contract, 'numberOfPasswordsOfAccount', {}, [
-        activeAccount?.address,
-      ])
-      const { output, isError, decodedOutput } = decodeOutput(
-        result,
-        contract,
-        'numberOfPasswordsOfAccount',
-      )
-      if (isError) throw new Error(decodedOutput)
-      setNumber(output)
-    } catch (e) {
-      console.error(e)
-      toast.error('Error while fetching password manager. Try again…')
-      setNumber(-1)
-    } finally {
-      setFetchIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchNumber()
-  }, [contract, activeAccount])
-
-  // Update Number
-  const updateNumber = async ({ number }: UpdateNumberValues) => {
+  // Add Password
+  const addPassword = async (data: PasswordMappingValues) => {
     if (!activeAccount || !contract || !activeSigner || !api) {
       toast.error('Wallet not connected. Try again…')
       return
     }
 
+    const unencrypted = JSON.stringify(data)
+    const { encryptedText, iv } = await encrypt(unencrypted, masterPassword)
+    const encrypted = `${iv}|${encryptedText}`
+
     // Send transaction
     setUpdateIsLoading(true)
     try {
-      await contractTxWithToast(api, activeAccount.address, contract, 'setNumberOfPasswords', {}, [
-        number,
+      await contractTxWithToast(api, activeAccount.address, contract, 'addPassword', {}, [
+        encrypted,
       ])
       reset()
     } catch (e) {
       console.error(e)
     } finally {
       setUpdateIsLoading(false)
-      fetchNumber()
     }
   }
 
@@ -80,39 +55,32 @@ export const PasswordManagerContractInteractions: FC = () => {
   return (
     <>
       <div tw="flex grow flex-col space-y-4 max-w-[20rem]">
-        <h2 tw="text-center font-mono text-gray-400">Password Manager Smart Contract</h2>
+        <h2 tw="text-center font-mono text-gray-400">Enter new password</h2>
 
-        {/* Enter Password */}
-        {!enteredPassword && (
-          <Card variant="outline" p={4} bgColor="whiteAlpha.100">
-            <Text mb={2}>Enter Master Password</Text>
-            <Flex direction={'row'} gap={2}>
-              <Input type="password" onChange={(e) => setPassword(e.target.value)} />
-              <Button colorScheme="purple" onClick={(e) => setEnteredPassword(true)}>
-                Submit
-              </Button>
-            </Flex>
-          </Card>
-        )}
-
-        {/* Fetched Number */}
+        {/* Add Password */}
         <Card variant="outline" p={4} bgColor="whiteAlpha.100">
-          <FormControl>
-            <FormLabel>Fetched Number</FormLabel>
-            <Input
-              placeholder={fetchIsLoading || !contract ? 'Loading…' : number?.toString()}
-              disabled={true}
-            />
-          </FormControl>
-        </Card>
-
-        {/* Update Number */}
-        <Card variant="outline" p={4} bgColor="whiteAlpha.100">
-          <form onSubmit={handleSubmit(updateNumber)}>
-            <Stack direction="row" spacing={2} align="end">
+          <form onSubmit={handleSubmit(addPassword)}>
+            <VStack spacing={2} align="end">
               <FormControl>
-                <FormLabel>Update Number</FormLabel>
-                <Input disabled={updateIsLoading} {...register('number')} />
+                <FormLabel>URL</FormLabel>
+                <Input disabled={updateIsLoading} {...register('url')} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Username</FormLabel>
+                <Input disabled={updateIsLoading} {...register('username')} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Password</FormLabel>
+                <Input
+                  disabled={updateIsLoading}
+                  type="password"
+                  autoComplete="new-password"
+                  {...register('password')}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Description</FormLabel>
+                <Textarea disabled={updateIsLoading} {...register('description')} />
               </FormControl>
               <Button
                 type="submit"
@@ -123,7 +91,7 @@ export const PasswordManagerContractInteractions: FC = () => {
               >
                 Submit
               </Button>
-            </Stack>
+            </VStack>
           </form>
         </Card>
 

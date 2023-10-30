@@ -58,3 +58,14 @@ As such, no body can access your data unless they have your `master password`.
    pnpm run dev
    ```
 5. A link should appear, likely `http://localhost:3000`. Open it up in your favorite web browser (one with a polkadot wallet extension installed).
+
+## Future developments
+
+There are 2 main extensions I wish to make in the future:
+
+1. Create chrome/firefox extensions for this dapp so that it can work as a full-fledge password manager that we're all familiar with.
+2. Generalize a few features so that `password manager` can also act as a decentralized `secrets/credentials/key manager`.
+
+## Acknowledgement
+
+This repo was forked from [scio-labs/inkathon](https://github.com/scio-labs/inkathon), a boilerplate repo that made developing and deploying `ink!`-based dapps incredibly easy!

@@ -42,3 +42,5 @@ next-env.d.ts
 # typescript
 *.tsbuildinfo
 dist
+
+.env.shibuya

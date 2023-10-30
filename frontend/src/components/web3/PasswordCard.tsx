@@ -61,7 +61,7 @@ export const PasswordCard: FC<PasswordCardProps> = ({
   }, [masterPassword, encryptedText])
 
   return (
-    <Card maxW="md" variant="outline" px={8} py={8} bgColor="whiteAlpha.100">
+    <Card maxW="xl" variant="outline" px={8} py={8} bgColor="whiteAlpha.100">
       <Stack>
         <Flex justifyContent="space-between" pb={4}>
           <Text>Password {n + 1}</Text>

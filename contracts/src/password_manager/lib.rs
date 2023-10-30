@@ -8,15 +8,24 @@ mod password_manager {
     };
     use ink::storage::Mapping;
 
+    #[derive(Debug, PartialEq, Eq, scale::Encode, scale::Decode)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    pub enum Error {
+        /// The requested password does not exist, likely because the user
+        /// is requesting password #{n} when there are fewer than {n} passwords
+        /// associated with the account id.
+        PasswordDoesNotExist,
+    }
+    // result type
+    pub type Result<T> = core::result::Result<T, Error>;
+
     #[ink(event)]
-    pub struct SetNumber {
+    pub struct InitializedContract {
         account_id: AccountId,
-        number: u16,
     }
 
     #[ink(storage)]
     pub struct PasswordManager {
-        num_passwords: Mapping<AccountId, u16>,
         password: Mapping<String, String>,
         last_updated: Mapping<AccountId, Vec<u64>>,
     }
@@ -26,7 +35,6 @@ mod password_manager {
         #[ink(constructor)]
         pub fn default() -> Self {
             Self {
-                num_passwords: Mapping::default(),
                 password: Mapping::default(),
                 last_updated: Mapping::default(),
             }
@@ -41,33 +49,10 @@ mod password_manager {
             key
         }
 
-        /// Sets number
-        #[ink(message)]
-        pub fn set_number_of_passwords(&mut self, number: u16) {
-            let account_id = self.env().caller();
-
-            self.num_passwords.insert(&account_id, &number);
-            self.env().emit_event(SetNumber { account_id, number })
-        }
-
-        /// Returns the current value of `num_passwords`.
-        #[ink(message)]
-        pub fn number_of_passwords(&self) -> u16 {
-            self.num_passwords
-                .get(self.env().caller())
-                .unwrap_or_default()
-        }
-
-        /// Returns the current value of `num_passwords`.
-        #[ink(message)]
-        pub fn number_of_passwords_of_account(&self, account_id: AccountId) -> u16 {
-            self.num_passwords.get(account_id).unwrap_or_default()
-        }
-
         /// Adds password
         /// Note: Added passwords will be associated with the caller's account id
         #[ink(message)]
-        pub fn add_password(&mut self, encrypted: String) {
+        pub fn add_password(&mut self, encrypted: String) -> Result<()> {
             let account_id = self.env().caller();
             let mut last_updated = self.last_updated.get(&account_id).unwrap_or_default();
             let num = last_updated.len() as u16;
@@ -79,32 +64,31 @@ mod password_manager {
             // update last_updated
             last_updated.push(self.env().block_timestamp());
             self.last_updated.insert(&account_id, &last_updated);
+
+            Ok(())
         }
 
         /// Updates password
         /// Note: Callers can only modify password that are already associated with their account id
         #[ink(message)]
-        pub fn update_password(&mut self, num: u16, encrypted: String) {
+        pub fn update_password(&mut self, num: u16, encrypted: String) -> Result<()> {
             let account_id = self.env().caller();
+            let mut last_updated = self.last_updated.get(&account_id).unwrap_or_default();
+            let num_passwords = last_updated.len() as u16;
 
-            match self.num_passwords.get(&account_id) {
-                None => {
-                    // raise error since no password for caller exist
-                }
-                Some(n) if n < num => {
-                    // raise error since the number of passwords is less than `num`
-                }
-                Some(n) => {
-                    // add password
-                    let pw_key = self.pw_key(account_id, num);
-                    self.password.insert(&pw_key, &encrypted);
-
-                    // update last_updated[n]
-                    let mut last_updated = self.last_updated.get(&account_id).unwrap();
-                    last_updated[n as usize] = self.env().block_timestamp();
-                    self.last_updated.insert(&account_id, &last_updated);
-                }
+            if num_passwords < num {
+                return Err(Error::PasswordDoesNotExist);
             }
+
+            // add password
+            let pw_key = self.pw_key(account_id, num);
+            self.password.insert(&pw_key, &encrypted);
+
+            // update last_updated[num]
+            last_updated[num as usize] = self.env().block_timestamp();
+            self.last_updated.insert(&account_id, &last_updated);
+
+            Ok(())
         }
 
         /// Returns the nth encrypted password for account_id
@@ -118,17 +102,6 @@ mod password_manager {
         #[ink(message)]
         pub fn get_last_updated(&self, account_id: AccountId) -> Vec<u64> {
             self.last_updated.get(&account_id).unwrap_or_default()
-        }
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        #[ink::test]
-        fn new_works() {
-            let pw_manager = PasswordManager::default();
-            assert_eq!(pw_manager.number_of_passwords(), 0);
         }
     }
 }

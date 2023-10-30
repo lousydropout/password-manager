@@ -25,7 +25,6 @@ export const DisplayPasswords: FC<DisplayPasswordsProps> = ({ masterPassword }) 
   // Fetch Number
   const fetchNumber = async () => {
     if (!contract || !api) return
-    console.info('calling fetchNumber')
 
     setFetchIsLoading(true)
     try {

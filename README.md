@@ -2,12 +2,13 @@
 
 `Password Manager` is a blockchain-based `password manager`. This means that your data are secured by blockchain and cyptographic means rather than by some third party's good will.
 
-## Details
+## A few details
 
 - **frontend url:** https://password-manager-frontend-578yppkj9-lousydropouts-projects.vercel.app/
 - **smart contract address:** VwSS9BGfuHHjMjukTVPWPdoMkJ7TwNxJURSZUBEhGKF1py2 (https://shibuya.subscan.io/account/VwSS9BGfuHHjMjukTVPWPdoMkJ7TwNxJURSZUBEhGKF1py2)
 - **network:** Shibuya
 - **smart contract code:** https://github.com/lousydropout/password-manager/blob/main/contracts/src/password_manager/lib.rs
+- **helper cryptography code:** https://github.com/lousydropout/password-manager/blob/main/frontend/src/utils/crypto.ts
 
 ## Introduction
 

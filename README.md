@@ -2,6 +2,8 @@
 
 `Password Manager` is a blockchain-based `password manager`. This means that your data are secured by blockchain and cyptographic means rather than by some third party's good will.
 
+Further, a blockchain-based `password manager` is also distributed and decentralized. You don't need to worry about some service's server crashing preventing you from accessing your Netflix credentials :)
+
 ## A few details
 
 - **frontend url:** https://password-manager-frontend-578yppkj9-lousydropouts-projects.vercel.app/

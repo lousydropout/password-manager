@@ -75,31 +75,3 @@ function adjustSecretKey(secretKey: string, targetLength: number): string {
 }
 
 export { decrypt, encrypt }
-
-// Example usage
-// const secretKeyHex = 'YourSecretKeyInHexFormat' // It will be adjusted to a 256-bit (32-byte) key
-// const plaintext = 'Hello, world!'
-
-// encrypt(plaintext, secretKeyHex).then((encryptedData) => {
-//   console.log('IV:', encryptedData.iv)
-//   console.log('Encrypted Text:', encryptedData.encryptedText)
-
-//   decrypt(encryptedData.encryptedText, encryptedData.iv, secretKeyHex).then(
-//     (decryptedText) => {
-//       console.log('Decrypted Text:', decryptedText)
-//     },
-//   )
-// })
-
-// encryptWithAES_CBC(plaintext, secretKeyHex).then((encryptedData) => {
-//   console.log("IV:", encryptedData.iv);
-//   console.log("Encrypted Text:", encryptedData.encryptedText);
-// })
-
-// decrypt(
-//   "Gh/o+VlY9PO/BmE1rGztgg==",
-//   "e3e67a3c97037bb106ef636bbce251a4",
-//   secretKeyHex
-// ).then((decryptedText) => {
-//   console.log("Decrypted Text:", decryptedText);
-// });

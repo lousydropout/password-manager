@@ -17,11 +17,9 @@ type PasswordMappingValues = {
 
 type DisplayPasswordsProps = { masterPassword: string }
 
-export const PasswordManagerContractInteractions: FC<DisplayPasswordsProps> = ({
-  masterPassword,
-}) => {
+export const KeyVaultContractInteractions: FC<DisplayPasswordsProps> = ({ masterPassword }) => {
   const { api, activeAccount, activeSigner } = useInkathon()
-  const { contract, address: contractAddress } = useRegisteredContract(ContractIds.PasswordManager)
+  const { contract, address: contractAddress } = useRegisteredContract(ContractIds.KeyVault)
   const [updateIsLoading, setUpdateIsLoading] = useState<boolean>()
   const { register, reset, handleSubmit } = useForm<PasswordMappingValues>()
 

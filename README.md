@@ -9,7 +9,7 @@ Further, a blockchain-based `password manager` is also distributed and decentral
 - **frontend url:** https://password-manager-frontend-578yppkj9-lousydropouts-projects.vercel.app/
 - **smart contract address:** VwSS9BGfuHHjMjukTVPWPdoMkJ7TwNxJURSZUBEhGKF1py2 (https://shibuya.subscan.io/account/VwSS9BGfuHHjMjukTVPWPdoMkJ7TwNxJURSZUBEhGKF1py2)
 - **network:** Shibuya
-- **smart contract code:** https://github.com/lousydropout/password-manager/blob/main/contracts/src/password_manager/lib.rs
+- **smart contract code:** https://github.com/lousydropout/password-manager/blob/main/contracts/src/keyvault/lib.rs
 - **helper cryptography code:** https://github.com/lousydropout/password-manager/blob/main/frontend/src/utils/crypto.ts
 
 ## Introduction

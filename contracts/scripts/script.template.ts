@@ -26,7 +26,7 @@ const main = async () => {
   const { api, chain, account } = await initPolkadotJs(chainId, accountUri)
 
   // Deploy password manager contract
-  const { abi, wasm } = await getDeploymentData('password_manager')
+  const { abi, wasm } = await getDeploymentData('keyvault')
   const { address } = await deployContract(api, account, abi, wasm, 'default', [])
   const contract = new ContractPromise(api, abi, address)
 

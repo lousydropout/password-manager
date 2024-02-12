@@ -27,12 +27,12 @@ const main = async () => {
   const { api, chain, account } = await initPolkadotJs(chainId, accountUri)
 
   // Deploy password manager contract
-  const { abi, wasm } = await getDeploymentData('password_manager')
-  const password_manager = await deployContract(api, account, abi, wasm, 'default', [])
+  const { abi, wasm } = await getDeploymentData('keyvault')
+  const keyvault = await deployContract(api, account, abi, wasm, 'default', [])
 
   // Write contract addresses to `{contract}/{network}.ts` file(s)
   await writeContractAddresses(chain.network, {
-    password_manager,
+    keyvault,
   })
 }
 

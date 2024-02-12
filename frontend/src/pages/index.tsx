@@ -2,7 +2,7 @@ import { HomePageTitle } from '@/components/home/HomePageTitle'
 import { CenterBody } from '@/components/layout/CenterBody'
 import { ConnectButton } from '@/components/web3/ConnectButton'
 import { DisplayPasswords } from '@/components/web3/DisplayPasswords'
-import { PasswordManagerContractInteractions } from '@/components/web3/PasswordManagerContractInteractions'
+import { KeyVaultContractInteractions } from '@/components/web3/KeyVaultContractInteractions'
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
 import { Button, Card, Flex, Input, InputGroup, InputRightElement, Text } from '@chakra-ui/react'
 import { useInkathon } from '@scio-labs/use-inkathon'
@@ -64,7 +64,7 @@ const HomePage: NextPage = () => {
 
         <div tw="mt-10 flex w-full flex-wrap items-start justify-center gap-4">
           {/* Password Manager Read/Write Contract Interactions */}
-          <PasswordManagerContractInteractions masterPassword={masterPassword ?? ''} />
+          <KeyVaultContractInteractions masterPassword={masterPassword ?? ''} />
 
           {/* Display Passwords */}
           <DisplayPasswords masterPassword={masterPassword ?? ''} />

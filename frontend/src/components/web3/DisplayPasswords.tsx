@@ -15,7 +15,7 @@ type DisplayPasswordsProps = { masterPassword: string }
 
 export const DisplayPasswords: FC<DisplayPasswordsProps> = ({ masterPassword }) => {
   const { api, activeAccount, activeSigner } = useInkathon()
-  const { contract, address: contractAddress } = useRegisteredContract(ContractIds.PasswordManager)
+  const { contract, address: contractAddress } = useRegisteredContract(ContractIds.KeyVault)
   const [lastUpdated, setLastUpdated] = useState<number[]>([])
   const [number, setNumber] = useState<number>()
   const [encryptedTexts, setEncryptedTexts] = useState<string[]>([])

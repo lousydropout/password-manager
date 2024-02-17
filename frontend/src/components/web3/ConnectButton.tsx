@@ -23,7 +23,6 @@ import {
   allSubstrateWallets,
   getSubstrateChain,
   isWalletInstalled,
-  useBalance,
   useInkathon,
 } from '@scio-labs/use-inkathon'
 import Image from 'next/image'
@@ -46,11 +45,6 @@ export const ConnectButton: FC<ConnectButtonProps> = () => {
     accounts,
     setActiveAccount,
   } = useInkathon()
-  const { balanceFormatted } = useBalance(activeAccount?.address, true, {
-    forceUnit: false,
-    fixedDecimals: 2,
-    removeTrailingZeros: true,
-  })
   const [supportedChains] = useState(
     env.supportedChains.map((networkId) => getSubstrateChain(networkId) as SubstrateChain),
   )
@@ -116,22 +110,6 @@ export const ConnectButton: FC<ConnectButtonProps> = () => {
   return (
     <Menu>
       <HStack>
-        {/* Account Balance */}
-        {balanceFormatted !== undefined && (
-          <Button
-            py={6}
-            pl={5}
-            rounded="2xl"
-            fontWeight="bold"
-            fontSize="sm"
-            fontFamily="mono"
-            letterSpacing={-0.25}
-            pointerEvents="none"
-          >
-            {balanceFormatted}
-          </Button>
-        )}
-
         {/* Account Name, Address, and AZNS-Domain (if assigned) */}
         <MenuButton
           as={Button}

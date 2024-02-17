@@ -1,4 +1,5 @@
 import { BaseLayout } from '@/components/layout/BaseLayout'
+import { Header } from '@/components/layout/Header'
 import { HotToastConfig } from '@/components/layout/HotToastConfig'
 import { env } from '@/config/environment'
 import { getDeployments } from '@/deployments/deployments'
@@ -22,14 +23,14 @@ function MyApp({ Component, pageProps }: AppProps) {
       <DefaultSeo
         dangerouslySetAllPagesToNoFollow={!env.isProduction}
         dangerouslySetAllPagesToNoIndex={!env.isProduction}
-        defaultTitle="Password Manager"
-        titleTemplate="%s | Password Manager"
-        description="A password manager on a blockchain"
+        defaultTitle="KeyVault"
+        titleTemplate="%s | KeyVault"
+        description="A blockchain-based password manager"
         openGraph={{
           type: 'website',
           locale: 'en',
           url: env.url,
-          site_name: 'Password Manager',
+          site_name: 'KeyVault',
           images: [
             {
               url: `${env.url}/images/cover.jpg`, // TODO
@@ -52,7 +53,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       </Head>
 
       <UseInkathonProvider
-        appName="Password Manager"
+        appName="KeyVault"
         connectOnInit={true}
         defaultChain={env.defaultChain}
         deployments={getDeployments()}
@@ -63,6 +64,7 @@ function MyApp({ Component, pageProps }: AppProps) {
               <GlobalStyles />
 
               <BaseLayout>
+                <Header />
                 <Component {...pageProps} />
               </BaseLayout>
 

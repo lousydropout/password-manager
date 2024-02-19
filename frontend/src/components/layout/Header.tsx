@@ -7,13 +7,11 @@ import 'twin.macro'
 
 export const Header = () => {
   const title = 'KeyVault'
-  const githubHref = 'https://github.com/lousydropout/password-manager'
   return (
     <HStack tw="flex justify-between px-8 py-4">
       {/* Logo & Title */}
       <Link
-        href={githubHref}
-        target="_blank"
+        href="/"
         className="group"
         tw="flex cursor-pointer gap-4 rounded-3xl py-1.5 px-3.5 transition-all hover:bg-gray-900"
       >

@@ -1,10 +1,7 @@
-import { HomePageTitle } from '@/components/home/HomePageTitle'
-import { CenterBody } from '@/components/layout/CenterBody'
-import { ConnectButton } from '@/components/web3/ConnectButton'
-import { DisplayPasswords } from '@/components/web3/DisplayPasswords'
-import { KeyVaultContractInteractions } from '@/components/web3/KeyVaultContractInteractions'
-import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons'
-import { Button, Card, Flex, Input, InputGroup, InputRightElement, Text } from '@chakra-ui/react'
+import { AccountCreation } from '@/components/AccountCreation'
+import { AccountDashboard } from '@/components/AccountDashboard'
+import { KeyVault, keyvaultDefault } from '@/machines/userflowMachine'
+import { VStack } from '@chakra-ui/react'
 import { useInkathon } from '@scio-labs/use-inkathon'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
@@ -12,65 +9,47 @@ import { toast } from 'react-hot-toast'
 import 'twin.macro'
 
 const HomePage: NextPage = () => {
-  // Display `useInkathon` error messages (optional)
+  // for preventing premature passing-of-state and rendering
+  const [ready, setReady] = useState<boolean>(false)
+  const [keyvault, setKeyvault] = useState<KeyVault>(keyvaultDefault)
   const { error } = useInkathon()
-  const [enteredPassword, setEnteredPassword] = useState<boolean>(false)
-  const [tmpPassword, setTmpPassword] = useState<string>('')
-  const [masterPassword, setMasterPassword] = useState<string>()
-  const [showPassword, setShowPassword] = useState<boolean>(false)
 
   useEffect(() => {
     if (!error) return
     toast.error(error.message)
   }, [error])
 
+  // read from sessionStorage
+  useEffect(() => {
+    const storedData = window.sessionStorage.getItem('keyvault')
+    if (storedData) {
+      setKeyvault({
+        createdAccount: false,
+        chosenPassword: false,
+        enteredAddress: false,
+        // ...JSON.parse(storedData),
+      })
+      setReady(true)
+    }
+  }, [])
+
   return (
-    <>
-      <CenterBody tw="mt-10 mb-10 px-5">
-        {/* Title */}
-        <HomePageTitle />
-
-        {/* Connect Wallet Button */}
-        <ConnectButton />
-
-        {/* Enter Master Password */}
-        <Card variant="outline" p={4} my={4} bgColor="whiteAlpha.100">
-          <Text mb={2}>Master Password</Text>
-          <Flex direction={'row'} gap={2}>
-            <InputGroup size="md">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={tmpPassword}
-                onChange={(e) => setTmpPassword(e.target.value)}
-              />
-              <InputRightElement>
-                <Button size="sm" onClick={() => setShowPassword((value) => !value)}>
-                  {showPassword ? <ViewOffIcon /> : <ViewIcon />}
-                </Button>
-              </InputRightElement>
-            </InputGroup>
-
-            <Button
-              colorScheme="purple"
-              onClick={(e) => {
-                setMasterPassword(tmpPassword)
-                setEnteredPassword(true)
-              }}
-            >
-              Update
-            </Button>
-          </Flex>
-        </Card>
-
-        <div tw="mt-10 flex w-full flex-wrap items-start justify-center gap-4">
-          {/* Password Manager Read/Write Contract Interactions */}
-          <KeyVaultContractInteractions masterPassword={masterPassword ?? ''} />
-
-          {/* Display Passwords */}
-          <DisplayPasswords masterPassword={masterPassword ?? ''} />
-        </div>
-      </CenterBody>
-    </>
+    <VStack>
+      {ready && (
+        <>
+          {!keyvault?.createdAccount && (
+            <>
+              <AccountCreation keyvault={keyvault} setKeyvault={setKeyvault} />
+            </>
+          )}
+          {keyvault?.createdAccount && (
+            <>
+              <AccountDashboard />
+            </>
+          )}
+        </>
+      )}
+    </VStack>
   )
 }
 

@@ -1,5 +1,5 @@
 import { ContractIds } from '@/deployments/deployments'
-import { KeyVault } from '@/machines/userflowMachine'
+import { KeyVault } from '@/pages'
 import { contractTxWithToast } from '@/utils/contractTxWithToast'
 import { truncateHash } from '@/utils/truncateHash'
 import {
@@ -72,6 +72,7 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
   }
 
   const gotoDashboard = () => {
+    window.postMessage({ type: 'ACCOUNT_CREATED', address: activeAccount?.address })
     setKeyvault((prev) => ({ ...prev, createdAccount: true }))
   }
 
@@ -84,11 +85,6 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
         <form>
           {/* Wallet address */}
           <FormControl my={12}>
-            {/* <FormLabel>
-              <Heading size="md">
-                Contract address: {contract ? contractAddress : 'Loading…'}
-              </Heading>
-            </FormLabel> */}
             <FormLabel>
               <Heading size="lg">Creating an account for address:</Heading>
             </FormLabel>

@@ -1,23 +1,18 @@
 import { AccountCreation } from '@/components/AccountCreation'
 import { AccountDashboard } from '@/components/AccountDashboard'
-import { KeyVault, keyvaultDefault } from '@/machines/userflowMachine'
 import { VStack } from '@chakra-ui/react'
-import { useInkathon } from '@scio-labs/use-inkathon'
 import type { NextPage } from 'next'
 import { useEffect, useState } from 'react'
-import { toast } from 'react-hot-toast'
 import 'twin.macro'
+
+export interface KeyVault {
+  createdAccount: boolean
+}
 
 const HomePage: NextPage = () => {
   // for preventing premature passing-of-state and rendering
   const [ready, setReady] = useState<boolean>(false)
-  const [keyvault, setKeyvault] = useState<KeyVault>(keyvaultDefault)
-  const { error } = useInkathon()
-
-  useEffect(() => {
-    if (!error) return
-    toast.error(error.message)
-  }, [error])
+  const [keyvault, setKeyvault] = useState<KeyVault>({ createdAccount: false })
 
   // read from sessionStorage
   useEffect(() => {
@@ -25,8 +20,6 @@ const HomePage: NextPage = () => {
     if (storedData) {
       setKeyvault({
         createdAccount: false,
-        chosenPassword: false,
-        enteredAddress: false,
         // ...JSON.parse(storedData),
       })
       setReady(true)

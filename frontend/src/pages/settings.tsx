@@ -23,12 +23,12 @@ const Settings: NextPage = () => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const { api, activeAccount, activeChain, activeSigner } = useInkathon()
   const { contract } = useRegisteredContract(ContractIds.KeyVault)
-  const { messages, setListenState } = useMessageQueue<string>('exampleVar', 4, false) // Initialize with expected number of responses
+  const { messages, setListening } = useMessageQueue<string>('exampleVar', 4, false) // Initialize with expected number of responses
 
   const handleClick = () => {
     // Start listening for messages
     // startListening()
-    setListenState((prev: boolean) => !prev)
+    setListening((prev: boolean) => !prev)
   }
 
   // Render the received messages

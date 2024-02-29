@@ -90,5 +90,5 @@ export const useMessageQueue = <T>(
     return consumed
   }, [messages])
 
-  return { messages, idx, consumeAllMessages, resetIndex, listening, setListenState: setListening }
+  return { messages, idx, consumeAllMessages, resetIndex, listening, setListening }
 }

@@ -1,12 +1,12 @@
 {
   "source": {
-    "hash": "0x98a21789962117687d303bdef4ba563c5b86936500dc159c4a96a447bb349976",
+    "hash": "0x179792ad7946291ca44e41ec60747971d0d6187e61f76f5c77647d69d4cbeff4",
     "language": "ink! 4.3.0",
-    "compiler": "rustc 1.75.0-nightly",
+    "compiler": "rustc 1.69.0",
     "build_info": {
-      "build_mode": "Release",
+      "build_mode": "Debug",
       "cargo_contract_version": "3.0.1",
-      "rust_toolchain": "nightly-x86_64-unknown-linux-gnu",
+      "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
       "wasm_opt_settings": {
         "keep_debug_symbols": false,
         "optimization_passes": "Z"
@@ -81,23 +81,75 @@
         "displayName": [
           "ChainExtension"
         ],
-        "type": 24
+        "type": 26
       },
       "hash": {
         "displayName": [
           "Hash"
         ],
-        "type": 22
+        "type": 24
       },
       "maxEventTopics": 4,
       "timestamp": {
         "displayName": [
           "Timestamp"
         ],
-        "type": 23
+        "type": 25
       }
     },
-    "events": [],
+    "events": [
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "user",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "docs": [
+          "Defines an event that is emitted",
+          "when a user registers an account."
+        ],
+        "label": "Registered"
+      },
+      {
+        "args": [
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "user",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          },
+          {
+            "docs": [],
+            "indexed": false,
+            "label": "num_entries",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 5
+            }
+          }
+        ],
+        "docs": [
+          "Defines an event that is emitted",
+          "every time an update is made."
+        ],
+        "label": "AddedEntry"
+      }
+    ],
     "lang_error": {
       "displayName": [
         "ink",
@@ -136,6 +188,24 @@
       },
       {
         "args": [
+          {
+            "label": "iv",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "label": "ciphertext",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 4
+            }
+          },
           {
             "label": "agrees_to_terms",
             "type": {
@@ -211,6 +281,43 @@
       {
         "args": [
           {
+            "label": "expected_index",
+            "type": {
+              "displayName": [
+                "u32"
+              ],
+              "type": 5
+            }
+          },
+          {
+            "label": "entries",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 13
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Adds new encrypted entries for the caller, ensuring sequential order."
+        ],
+        "label": "add_entries",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 9
+        },
+        "selector": "0xa70ec9e5"
+      },
+      {
+        "args": [
+          {
             "label": "account_id",
             "type": {
               "displayName": [
@@ -232,7 +339,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 13
+          "type": 15
         },
         "selector": "0x09c6a284"
       },
@@ -250,7 +357,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 13
+          "type": 15
         },
         "selector": "0x81e7a2e8"
       },
@@ -287,7 +394,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 15
+          "type": 17
         },
         "selector": "0xdd50e3b8"
       },
@@ -315,12 +422,31 @@
             "ink",
             "MessageResult"
           ],
-          "type": 15
+          "type": 17
         },
         "selector": "0x999f076a"
       },
       {
-        "args": [],
+        "args": [
+          {
+            "label": "iv",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 4
+            }
+          },
+          {
+            "label": "ciphertext",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 4
+            }
+          }
+        ],
         "default": false,
         "docs": [
           " Resets the caller's account, setting their entry count to zero."
@@ -351,7 +477,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 18
+          "type": 20
         },
         "selector": "0x07fcd0b1"
       },
@@ -376,7 +502,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 19
+          "type": 21
         },
         "selector": "0x2c075632"
       },
@@ -506,7 +632,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 21
+          "type": 23
         },
         "selector": "0xea817e65"
       },
@@ -905,10 +1031,6 @@
               },
               {
                 "index": 6,
-                "name": "EntriesAlreadyRemoved"
-              },
-              {
-                "index": 7,
                 "name": "TransferFailed"
               }
             ]
@@ -933,84 +1055,21 @@
       "id": 13,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 14
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 8
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
+          "sequence": {
             "type": 14
-          },
-          {
-            "name": "E",
-            "type": 8
           }
-        ],
-        "path": [
-          "Result"
-        ]
+        }
       }
     },
     {
       "id": 14,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 5
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 11
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 5
-          },
-          {
-            "name": "E",
-            "type": 11
-          }
-        ],
-        "path": [
-          "Result"
-        ]
+          "tuple": [
+            4,
+            4
+          ]
+        }
       }
     },
     {
@@ -1064,7 +1123,7 @@
               {
                 "fields": [
                   {
-                    "type": 17
+                    "type": 5
                   }
                 ],
                 "index": 0,
@@ -1085,7 +1144,7 @@
         "params": [
           {
             "name": "T",
-            "type": 17
+            "type": 5
           },
           {
             "name": "E",
@@ -1099,6 +1158,90 @@
     },
     {
       "id": 17,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 18
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 8
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 18
+          },
+          {
+            "name": "E",
+            "type": 8
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 18,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 19
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 11
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 19
+          },
+          {
+            "name": "E",
+            "type": 11
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 19,
       "type": {
         "def": {
           "composite": {
@@ -1124,7 +1267,7 @@
       }
     },
     {
-      "id": 18,
+      "id": 20,
       "type": {
         "def": {
           "variant": {
@@ -1166,7 +1309,7 @@
       }
     },
     {
-      "id": 19,
+      "id": 21,
       "type": {
         "def": {
           "variant": {
@@ -1174,7 +1317,7 @@
               {
                 "fields": [
                   {
-                    "type": 20
+                    "type": 22
                   }
                 ],
                 "index": 0,
@@ -1195,7 +1338,7 @@
         "params": [
           {
             "name": "T",
-            "type": 20
+            "type": 22
           },
           {
             "name": "E",
@@ -1208,7 +1351,7 @@
       }
     },
     {
-      "id": 20,
+      "id": 22,
       "type": {
         "def": {
           "tuple": [
@@ -1221,7 +1364,7 @@
       }
     },
     {
-      "id": 21,
+      "id": 23,
       "type": {
         "def": {
           "variant": {
@@ -1263,7 +1406,7 @@
       }
     },
     {
-      "id": 22,
+      "id": 24,
       "type": {
         "def": {
           "composite": {
@@ -1283,7 +1426,7 @@
       }
     },
     {
-      "id": 23,
+      "id": 25,
       "type": {
         "def": {
           "primitive": "u64"
@@ -1291,7 +1434,7 @@
       }
     },
     {
-      "id": 24,
+      "id": 26,
       "type": {
         "def": {
           "variant": {}

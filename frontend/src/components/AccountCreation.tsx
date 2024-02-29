@@ -2,11 +2,11 @@ import { ContractIds } from '@/deployments/deployments'
 import { KeyVault } from '@/pages'
 import { contractTxWithToast } from '@/utils/contractTxWithToast'
 import { truncateHash } from '@/utils/truncateHash'
+import { Link as ChakraLink } from '@chakra-ui/next-js'
 import {
   Box,
   Button,
   Checkbox,
-  Flex,
   FormControl,
   FormLabel,
   HStack,
@@ -29,7 +29,7 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
   const [termsContent, setTermsContent] = useState('')
   const [isAgreed, setIsAgreed] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const { contract, address: contractAddress } = useRegisteredContract(ContractIds.KeyVault)
+  const { contract } = useRegisteredContract(ContractIds.KeyVault)
   const [accountCreated, setAccountCreated] = useState<boolean>(false)
 
   // get terms and conditions
@@ -72,7 +72,10 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
   }
 
   const gotoDashboard = () => {
-    window.postMessage({ type: 'ACCOUNT_CREATED', address: activeAccount?.address })
+    window.postMessage(
+      { type: 'ACCOUNT_CREATED', address: activeAccount?.address },
+      window.location.origin,
+    )
     setKeyvault((prev) => ({ ...prev, createdAccount: true }))
   }
 
@@ -122,27 +125,19 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
           </FormControl>
 
           {/* Terms and Conditions */}
-          <Heading size="lg">Terms and Conditions</Heading>
-          <Box
-            maxH="300px"
-            overflowY="scroll"
-            borderWidth="1px"
-            rounded={'md'}
-            p={4}
-            my={4}
-            whiteSpace="pre-wrap"
-          >
-            {termsContent}
-          </Box>
-          <Checkbox
-            isChecked={isAgreed}
-            onChange={(e) => setIsAgreed(e.target.checked)}
-            mb={4}
-            colorScheme="purple"
-          >
-            I agree to the Terms and Conditions
-          </Checkbox>
-
+          <HStack alignItems={'center'} mb={4}>
+            <Checkbox
+              isChecked={isAgreed}
+              onChange={(e) => setIsAgreed(e.target.checked)}
+              colorScheme="purple"
+            ></Checkbox>
+            <Text>
+              I agree to the{' '}
+              <ChakraLink href="/terms" target="_blank" colorScheme="purple" color={'purple.300'}>
+                Terms and Conditions
+              </ChakraLink>
+            </Text>
+          </HStack>
           {/* Submission */}
           <Button
             width="full"
@@ -182,10 +177,8 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
   )
 
   return (
-    <Flex maxWidth={'container.sm'} align="center" justifyContent="center" mt={20}>
-      <Box p={12} border={'1px'} rounded={'2xl'}>
-        {accountCreated ? <CreationSuccessful /> : <TxSubmission />}
-      </Box>
-    </Flex>
+    <Box p={12} border={'1px'} rounded={'2xl'}>
+      {accountCreated ? <CreationSuccessful /> : <TxSubmission />}
+    </Box>
   )
 }

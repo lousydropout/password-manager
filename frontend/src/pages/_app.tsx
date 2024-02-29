@@ -1,10 +1,11 @@
 import { BaseLayout } from '@/components/layout/BaseLayout'
+import Footer from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { HotToastConfig } from '@/components/layout/HotToastConfig'
 import { env } from '@/config/environment'
 import { getDeployments } from '@/deployments/deployments'
 import GlobalStyles from '@/styles/GlobalStyles'
-import { ChakraProvider, DarkMode } from '@chakra-ui/react'
+import { Box, ChakraProvider, DarkMode } from '@chakra-ui/react'
 import { cache } from '@emotion/css'
 import { CacheProvider } from '@emotion/react'
 import { UseInkathonProvider } from '@scio-labs/use-inkathon'
@@ -65,7 +66,12 @@ function MyApp({ Component, pageProps }: AppProps) {
 
               <BaseLayout>
                 <Header />
-                <Component {...pageProps} />
+                <Box height={'50px'}></Box>
+                <Box maxWidth={'780px'} mx={'auto'} px={8}>
+                  <Component {...pageProps} />
+                </Box>
+                <Box height={'10rem'}></Box>
+                <Footer />
               </BaseLayout>
 
               <HotToastConfig />

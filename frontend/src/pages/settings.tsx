@@ -28,7 +28,7 @@ const Settings: NextPage = () => {
   const handleClick = () => {
     // Start listening for messages
     // startListening()
-    setListening((prev: boolean) => !prev)
+    setListening((prev) => !prev)
   }
 
   // Render the received messages

@@ -67,7 +67,7 @@ function MyApp({ Component, pageProps }: AppProps) {
               <BaseLayout>
                 <Header />
                 <Box height={'50px'}></Box>
-                <Box maxWidth={'780px'} mx={'auto'} px={8}>
+                <Box maxWidth={'900px'} mx={'auto'} px={8}>
                   <Component {...pageProps} />
                 </Box>
                 <Box height={'10rem'}></Box>

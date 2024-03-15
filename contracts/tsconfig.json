@@ -17,5 +17,11 @@
     "composite": true
   },
   "exclude": ["./*/target"],
-  "include": ["./deployments/**/*.json", "./deployments/**/*.ts", "./scripts/**/*.ts"]
+  "include": [
+    "./deployments/**/*.json",
+    "./deployments/**/*.ts",
+    "./scripts/**/*.ts",
+    "deployments/keyvault/keyvault.js",
+    "deployments/keyvault/keyvault.js"
+  ]
 }

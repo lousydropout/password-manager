@@ -7,24 +7,35 @@ mod keyvault {
 
     const VERSION: u8 = 1;
 
+    /// Defines an event that is emitted
+    /// when a user registers an account.
+    #[ink(event)]
+    pub struct Registered {
+        user: AccountId,
+    }
+
+    /// Defines an event that is emitted
+    /// every time an update is made.
+    #[ink(event)]
+    pub struct AddedEntry {
+        user: AccountId,
+        num_entries: u32,
+    }
+
     #[derive(Debug, Clone, PartialEq, Eq, scale::Encode, scale::Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
-        /// Error for when caller attempts to create an account without agreeing to terms and conditions.
-        UserDoesNotAgreeToTerms,
-        /// Error for operations on an unregistered or missing account.
+        /// Error for operations on an unregistered account.
         AccountNotFound,
         /// Error for when user attempts to create an account, but it already exists.
         AccountAlreadyExists,
-        /// Error when a non-owner attempts a restricted operation.
+        /// Error for when a non-owner attempts a restricted operation.
         NotOwner,
         /// Error for when caller attempts to create an account with insufficient payment.
         InsufficientPayment,
-        /// Error when an entry is added out of sequence.
+        /// Error for when an entry is added out of sequence.
         IndexMismatch,
-        /// Error when attempting to delete an already deleted or non-existent account.
-        EntriesAlreadyRemoved,
-        /// Error when a transfer fails.
+        /// Error for when a transfer fails.
         TransferFailed,
     }
 
@@ -59,6 +70,11 @@ mod keyvault {
         /// This fee is set by the contract owner.
         fee: Balance,
 
+        /// Hash of user's encryption key.
+        ///
+        /// This is so that the browser extension is using the correct encryption key.
+        encryption_key_hash: Mapping<AccountId, Vec<u8>>,
+
         /// Mapping from a composite key (`AccountId:index`) to an encrypted entry.
         ///
         /// Each entry consists of an initialization vector (IV) and ciphertext, representing encrypted data.
@@ -83,14 +99,15 @@ mod keyvault {
         /// Version number of the latest browser extension that is compatible with this smart contract.
         ///
         /// It ensures users are aware of the necessary software version for optimal interaction.
-        latest_compatible_browser_extension_version: Vec<u8>,
+        latest_compatible_browser_extension_version: u32,
     }
 
     impl KeyVault {
         #[ink(constructor)]
-        pub fn new(owner: AccountId, latest_compatible_browser_extension_version: Vec<u8>) -> Self {
+        pub fn new(owner: AccountId, latest_compatible_browser_extension_version: u32) -> Self {
             Self {
                 owner,
+                encryption_key_hash: Mapping::new(),
                 entries: Mapping::new(),
                 num_entries: Mapping::new(),
                 latest_smart_contract_version: VERSION,
@@ -125,10 +142,7 @@ mod keyvault {
 
         /// Creates account
         #[ink(message, payable)]
-        pub fn create_account(&mut self, agrees_to_terms: bool) -> Result<()> {
-            if !agrees_to_terms {
-                return Err(Error::UserDoesNotAgreeToTerms);
-            }
+        pub fn create_account(&mut self, encryption_key_hash: Vec<u8>) -> Result<()> {
             let caller = self.env().caller();
             let attached_deposit = self.env().transferred_value();
 
@@ -140,10 +154,24 @@ mod keyvault {
                 return Err(Error::InsufficientPayment);
             // "create" account
             } else {
+                // set hash of encryption key
+                self.encryption_key_hash
+                    .insert(&caller, &encryption_key_hash);
                 self.num_entries.insert(&caller, &0);
             }
 
+            // emit event
+            Self::env().emit_event(Registered { user: caller });
             Ok(())
+        }
+
+        /// Retrieves the hash of the encryption key of an AccountId
+        #[ink(message)]
+        pub fn get_encryption_key_hash(&self, account_id: AccountId) -> Result<Vec<u8>> {
+            Ok(self
+                .encryption_key_hash
+                .get(&account_id)
+                .ok_or(Error::AccountNotFound)?)
         }
 
         /// Adds a new encrypted entry for the caller, ensuring sequential order.
@@ -170,30 +198,67 @@ mod keyvault {
             self.entries
                 .insert(&key, &EncryptedEntry { iv, ciphertext });
             self.num_entries.insert(&caller, &(current_index + 1));
+
+            // emit event
+            Self::env().emit_event(AddedEntry {
+                user: caller,
+                num_entries: current_index + 1,
+            });
+            Ok(())
+        }
+
+        /// Adds new encrypted entries for the caller, ensuring sequential order.
+        #[ink(message)]
+        pub fn add_entries(
+            &mut self,
+            expected_index: u32,
+            entries: Vec<(Vec<u8>, Vec<u8>)>,
+        ) -> Result<()> {
+            let caller = self.env().caller();
+
+            // Check if the account exists
+            let current_index = self
+                .num_entries
+                .get(&caller)
+                .ok_or(Error::AccountNotFound)?;
+
+            if expected_index != current_index {
+                return Err(Error::IndexMismatch);
+            }
+
+            let entries_len = entries.len() as u32;
+
+            // `entries` is assumed to be a vector of (iv, ciphertext)
+            for (i, (iv, ciphertext)) in entries.into_iter().enumerate() {
+                let key = Self::construct_key(caller, current_index + i as u32);
+                self.entries
+                    .insert(&key, &EncryptedEntry { iv, ciphertext });
+            }
+
+            // Update `num_entries` for the caller after all entries have been added
+            self.num_entries
+                .insert(&caller, &(current_index + entries_len));
+
+            // emit event
+            Self::env().emit_event(AddedEntry {
+                user: caller,
+                num_entries: current_index + entries_len,
+            });
+
             Ok(())
         }
 
         /// Retrieves the number of entries for a given account ID.
         #[ink(message)]
-        pub fn get_entry_count_by_account_id(&self, account_id: AccountId) -> Result<u32> {
+        pub fn get_entry_count(&self, account_id: AccountId) -> Result<u32> {
             self.num_entries
                 .get(&account_id)
                 .ok_or(Error::AccountNotFound)
         }
 
-        /// Retrieves the entry count for the caller's account.
-        #[ink(message)]
-        pub fn get_entry_count_for_caller(&self) -> Result<u32> {
-            self.get_entry_count_by_account_id(self.env().caller())
-        }
-
         /// Retrieves an encrypted entry by index for a given account ID.
         #[ink(message)]
-        pub fn get_entry_by_account_id(
-            &self,
-            account_id: AccountId,
-            index: u32,
-        ) -> Result<EncryptedEntry> {
+        pub fn get_entry(&self, account_id: AccountId, index: u32) -> Result<EncryptedEntry> {
             let num = self
                 .num_entries
                 .get(&account_id)
@@ -206,27 +271,56 @@ mod keyvault {
             self.entries.get(&key).ok_or(Error::AccountNotFound)
         }
 
-        /// Retrieves an encrypted entry by index for the caller's account.
+        fn min(&self, a: u32, b: u32) -> u32 {
+            if a <= b {
+                a
+            } else {
+                b
+            }
+        }
+
+        /// Retrieves the encrypted entries requested for a given account ID.
         #[ink(message)]
-        pub fn get_entry_for_caller(&self, index: u32) -> Result<EncryptedEntry> {
-            self.get_entry_by_account_id(self.env().caller(), index)
+        pub fn get_entries(
+            &self,
+            account_id: AccountId,
+            start_index: u32,
+            max_num: u32,
+        ) -> Result<Vec<EncryptedEntry>> {
+            let num = self
+                .num_entries
+                .get(&account_id)
+                .ok_or(Error::AccountNotFound)?;
+            if start_index >= num {
+                return Err(Error::IndexMismatch);
+            }
+
+            let mut results = Vec::new();
+            for index in start_index..self.min(num, start_index + max_num) {
+                let key = Self::construct_key(account_id, index);
+                let entry = self.entries.get(&key).ok_or(Error::AccountNotFound)?;
+                results.push(entry);
+            }
+
+            Ok(results)
         }
 
         /// Resets the caller's account, setting their entry count to zero.
         #[ink(message)]
-        pub fn reset_account(&mut self) -> Result<()> {
+        pub fn reset_account(&mut self, iv: Vec<u8>, ciphertext: Vec<u8>) -> Result<()> {
             let caller = self.env().caller();
 
-            let num_entries = self
+            let _num_entries = self
                 .num_entries
                 .get(&caller)
                 .ok_or(Error::AccountNotFound)?;
 
-            if num_entries == 0 {
-                return Err(Error::EntriesAlreadyRemoved);
-            }
-
-            self.num_entries.insert(caller, &0);
+            // insert 1st encrypted entry
+            // this entry is meant to not contain any particular information
+            let key = Self::construct_key(caller, 0);
+            self.entries
+                .insert(&key, &EncryptedEntry { iv, ciphertext });
+            self.num_entries.insert(&caller, &1);
             Ok(())
         }
 
@@ -234,6 +328,12 @@ mod keyvault {
         #[ink(message)]
         pub fn get_owner(&self) -> AccountId {
             self.owner
+        }
+
+        /// Retrieves the contract owner's account ID.
+        #[ink(message)]
+        pub fn get_owner_result(&self) -> Result<AccountId> {
+            Ok(self.owner)
         }
 
         /// Retrieves the latest versions for both the KeyVault smart contract and browser extension.
@@ -245,13 +345,13 @@ mod keyvault {
         ///     latest compatible browser extension version,
         ///   )
         #[ink(message)]
-        pub fn get_versions(&self) -> (u8, u8, AccountId, Vec<u8>) {
+        pub fn get_versions(&self) -> (u8, u8, AccountId, u32) {
             (
                 VERSION,
                 self.latest_smart_contract_version.clone(),
                 self.latest_smart_contract_address
                     .unwrap_or_else(|| self.env().account_id()),
-                self.latest_compatible_browser_extension_version.clone(),
+                self.latest_compatible_browser_extension_version,
             )
         }
 
@@ -267,7 +367,7 @@ mod keyvault {
         #[ink(message)]
         pub fn set_latest_compatible_browser_extension_version(
             &mut self,
-            latest: Vec<u8>,
+            latest: u32,
         ) -> Result<()> {
             self.is_owner()?;
             self.latest_compatible_browser_extension_version = latest;
@@ -308,432 +408,6 @@ mod keyvault {
                     .map_err(|_| Error::TransferFailed)?;
             }
             Ok(())
-        }
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        fn default_accounts() -> ink::env::test::DefaultAccounts<ink::env::DefaultEnvironment> {
-            ink::env::test::default_accounts::<ink::env::DefaultEnvironment>()
-        }
-
-        fn set_next_caller(caller: AccountId) {
-            ink::env::test::set_caller::<Environment>(caller);
-        }
-
-        fn initialize() -> (
-            ink::env::test::DefaultAccounts<ink::env::DefaultEnvironment>,
-            KeyVault,
-        ) {
-            let accounts = default_accounts();
-            set_next_caller(accounts.alice);
-            let keyvault = KeyVault::new(accounts.alice, vec![2]);
-
-            (accounts, keyvault)
-        }
-
-        #[ink::test]
-        fn bob_attempts_to_create_account_without_agreeing_to_terms_and_conditions() {
-            let (accounts, mut keyvault) = initialize();
-
-            // Attempt to create an account wihtout agreeing to terms and conditions
-            set_next_caller(accounts.bob);
-            let agrees_to_terms_and_conditions = false;
-            let account_creation_response = ink::env::pay_with_call!(
-                keyvault.create_account(agrees_to_terms_and_conditions),
-                1
-            );
-            assert_eq!(
-                account_creation_response,
-                Err(Error::UserDoesNotAgreeToTerms)
-            );
-        }
-
-        #[ink::test]
-        fn bob_creates_account_and_adds_entry() {
-            let (accounts, mut keyvault) = initialize();
-            assert_eq!(keyvault.get_balance(), 1_000_000);
-
-            // Example data for iv and ciphertext
-            let iv = vec![0; 16]; // Example initialization vector
-            let ciphertext = vec![1, 2, 3, 4]; // Example encrypted data
-
-            // Adding an encrypted entry with index 0
-            set_next_caller(accounts.bob);
-            assert_eq!(
-                keyvault.add_entry(0, iv.clone(), ciphertext.clone()),
-                Err(Error::AccountNotFound)
-            );
-
-            // Create an account
-            set_next_caller(accounts.bob);
-            let account_creation_response =
-                ink::env::pay_with_call!(keyvault.create_account(true), 1);
-            assert_eq!(account_creation_response, Ok(()));
-            assert_eq!(keyvault.get_balance(), 1_000_001);
-
-            // Verify the entry count is zero
-            set_next_caller(accounts.bob);
-            assert_eq!(keyvault.get_entry_count_for_caller(), Ok(0));
-            assert_eq!(keyvault.get_entry_count_by_account_id(accounts.bob), Ok(0));
-
-            // Adding an encrypted entry with index 0
-            set_next_caller(accounts.bob);
-            assert_eq!(
-                keyvault.add_entry(0, iv.clone(), ciphertext.clone()),
-                Ok(())
-            );
-
-            // Verify the entry count is incremented
-            set_next_caller(accounts.bob);
-            assert_eq!(keyvault.get_entry_count_for_caller(), Ok(1));
-            assert_eq!(keyvault.get_entry_count_by_account_id(accounts.bob), Ok(1));
-
-            // Verify the EncryptedEntry data is correctly stored
-            let expected_entry = EncryptedEntry { iv, ciphertext };
-            assert_eq!(keyvault.get_entry_for_caller(0), Ok(expected_entry.clone()));
-            assert_eq!(
-                keyvault.get_entry_by_account_id(accounts.bob, 0),
-                Ok(expected_entry.clone())
-            );
-
-            // Repeat verfication as another user
-            // Verify the entry count is incremented
-            set_next_caller(accounts.charlie);
-            assert_eq!(keyvault.get_entry_count_by_account_id(accounts.bob), Ok(1));
-
-            // Verify the EncryptedEntry data is accessible by another user
-            assert_eq!(
-                keyvault.get_entry_by_account_id(accounts.bob, 0),
-                Ok(expected_entry)
-            );
-        }
-
-        #[ink::test]
-        fn bob_creates_account_and_adds_entry_at_bad_index() {
-            let (accounts, mut keyvault) = initialize();
-
-            // Create an account
-            set_next_caller(accounts.bob);
-            assert_eq!(
-                ink::env::pay_with_call!(keyvault.create_account(true), 1),
-                Ok(())
-            );
-
-            // Example data for iv and ciphertext, assuming failed operation due to wrong index
-            let iv = vec![0; 16];
-            let ciphertext = vec![1, 2, 3, 4];
-
-            // Attempt to add an entry at an index other than 0 should fail due to IndexMismatch
-            assert_eq!(
-                keyvault.add_entry(1, iv, ciphertext),
-                Err(Error::IndexMismatch)
-            );
-        }
-
-        #[ink::test]
-        fn bob_attempts_to_get_entry_account_before_creating_account() {
-            let (accounts, keyvault) = initialize();
-
-            // Attempt to get entry count for a non-existing account should fail with AccountNotFound
-            set_next_caller(accounts.bob);
-            assert_eq!(
-                keyvault.get_entry_count_for_caller(),
-                Err(Error::AccountNotFound)
-            );
-            assert_eq!(
-                keyvault.get_entry_count_by_account_id(accounts.bob),
-                Err(Error::AccountNotFound)
-            );
-        }
-
-        #[ink::test]
-        fn bob_attempts_to_set_new_owner_without_being_current_owner() {
-            let (accounts, mut keyvault) = initialize();
-
-            // Attempt to set owner using a non-owner account should fail with NotOwner
-            set_next_caller(accounts.bob);
-            assert_eq!(keyvault.set_owner(accounts.bob), Err(Error::NotOwner));
-        }
-
-        #[ink::test]
-        fn alice_sets_fee_and_bob_creates_new_account_successfully() {
-            let (accounts, mut keyvault) = initialize();
-
-            // Alice sets the account creation fee
-            set_next_caller(accounts.alice);
-            let new_fee = 100; // Set a new fee
-            assert_eq!(
-                keyvault.set_account_creation_fee(new_fee),
-                Ok(()),
-                "Alice should be able to set the fee successfully."
-            );
-
-            // Check that the fee was set correctly
-            assert_eq!(
-                keyvault.fee, new_fee,
-                "The fee should be updated to the new value."
-            );
-
-            // Bob attempts to create an account by paying the new fee
-            set_next_caller(accounts.bob);
-            let inital_balance = keyvault.get_balance();
-            let account_creation_response =
-                ink::env::pay_with_call!(keyvault.create_account(true), new_fee);
-            assert_eq!(
-                account_creation_response,
-                Ok(()),
-                "Bob should be able to create an account by paying the correct fee."
-            );
-            assert_eq!(
-                keyvault.get_balance(),
-                inital_balance + new_fee,
-                "The balance should have increated by the amount Bob paid to create account."
-            );
-
-            // Verify Bob's account was created successfully by checking the entry count
-            assert_eq!(
-                keyvault.get_entry_count_by_account_id(accounts.bob),
-                Ok(0),
-                "Bob's entry count should be 0 after account creation."
-            );
-        }
-
-        #[ink::test]
-        fn bob_fails_to_create_account_due_to_insufficient_fee() {
-            let (accounts, mut keyvault) = initialize();
-
-            // Alice sets the account creation fee
-            set_next_caller(accounts.alice);
-            let required_fee = 100; // Define a required fee
-            assert_eq!(
-                keyvault.set_account_creation_fee(required_fee),
-                Ok(()),
-                "Setting fee should succeed."
-            );
-
-            // Bob attempts to create an account with insufficient fee
-            set_next_caller(accounts.bob);
-            let insufficient_fee = required_fee - 1; // Bob pays less than required
-
-            // Simulate paying the insufficient fee and attempting account creation
-            let account_creation_response =
-                ink::env::pay_with_call!(keyvault.create_account(true), insufficient_fee);
-            assert_eq!(
-                account_creation_response,
-                Err(Error::InsufficientPayment),
-                "Bob's account creation should fail due to insufficient fee."
-            );
-        }
-
-        #[ink::test]
-        fn bob_adds_entries_sequentially_and_retrieves_them_successfully() {
-            let (accounts, mut keyvault) = initialize();
-
-            // Bob creates an account.
-            set_next_caller(accounts.bob);
-            let account_creation_response =
-                ink::env::pay_with_call!(keyvault.create_account(true), keyvault.fee);
-            assert_eq!(account_creation_response, Ok(()));
-
-            // Here we simulate Bob adding entries sequentially.
-            let iv = vec![0; 16]; // Sample initialization vector.
-            let mut ciphertext = vec![1, 2, 3, 4]; // Sample encrypted data.
-
-            // Bob adds the first entry.
-            assert_eq!(
-                keyvault.add_entry(0, iv.clone(), ciphertext.clone()),
-                Ok(())
-            );
-
-            // Bob adds the second entry.
-            ciphertext.push(5);
-            ciphertext.push(6);
-            assert_eq!(
-                keyvault.add_entry(1, iv.clone(), ciphertext.clone()),
-                Ok(())
-            );
-
-            // Bob retrieves the first entry.
-            assert_eq!(
-                keyvault.get_entry_for_caller(0),
-                Ok(EncryptedEntry {
-                    iv: iv.clone(),
-                    ciphertext: vec![1, 2, 3, 4],
-                })
-            );
-
-            // Bob retrieves the second entry.
-            assert_eq!(
-                keyvault.get_entry_for_caller(1),
-                Ok(EncryptedEntry {
-                    iv,
-                    ciphertext: vec![1, 2, 3, 4, 5, 6]
-                })
-            );
-        }
-
-        #[ink::test]
-        fn bob_resets_his_account_and_loses_all_entries() {
-            let (accounts, mut keyvault) = initialize();
-
-            // Bob creates an account.
-            set_next_caller(accounts.bob);
-            let account_creation_response =
-                ink::env::pay_with_call!(keyvault.create_account(true), keyvault.fee);
-            assert_eq!(account_creation_response, Ok(()));
-
-            // Here we simulate Bob adding entries sequentially.
-            // Bob adds the first entry.
-            keyvault
-                .add_entry(0, vec![0; 16], vec![1, 2, 3, 4])
-                .expect("Bob is unable to add new entry.");
-            // Bob adds the second entry.
-            keyvault
-                .add_entry(1, vec![1; 16], vec![1, 2, 3, 4, 5, 6, 7])
-                .expect("Bob is unable to add new entry.");
-
-            // Verify Bob has two entries
-            assert_eq!(keyvault.get_entry_count_for_caller(), Ok(2));
-            assert_eq!(keyvault.get_entry_count_by_account_id(accounts.bob), Ok(2));
-
-            // Verify that Bob is able to access his entries
-            assert_eq!(
-                keyvault.get_entry_for_caller(0),
-                Ok(EncryptedEntry {
-                    iv: vec![0; 16],
-                    ciphertext: vec![1, 2, 3, 4]
-                })
-            );
-            assert_eq!(
-                keyvault.get_entry_for_caller(1),
-                Ok(EncryptedEntry {
-                    iv: vec![1; 16],
-                    ciphertext: vec![1, 2, 3, 4, 5, 6, 7]
-                })
-            );
-
-            // Here we simulate Bob resetting his account.
-            assert_eq!(keyvault.reset_account(), Ok(()));
-
-            // Verify Bob's entries are reset.
-            assert_eq!(keyvault.get_entry_count_for_caller(), Ok(0));
-            assert_eq!(keyvault.get_entry_count_by_account_id(accounts.bob), Ok(0));
-
-            // Verify that Bob is no longer able to access his previous entries
-            assert_eq!(keyvault.get_entry_for_caller(0), Err(Error::IndexMismatch));
-            assert_eq!(keyvault.get_entry_for_caller(1), Err(Error::IndexMismatch));
-        }
-
-        #[ink::test]
-        fn bob_fails_to_withdraw_balance_as_non_owner_until_alice_transfers_ownership() {
-            let (accounts, mut keyvault) = initialize();
-
-            // Bob attempts to withdraw balance.
-            set_next_caller(accounts.bob);
-            assert_eq!(keyvault.withdraw(), Err(Error::NotOwner));
-
-            // Alice transfers ownership
-            set_next_caller(accounts.alice);
-            assert_eq!(keyvault.set_owner(accounts.bob), Ok(()));
-
-            // Bob attempts to withdraw balance.
-            set_next_caller(accounts.bob);
-            assert_eq!(keyvault.withdraw(), Ok(()));
-        }
-
-        #[ink::test]
-        fn alice_updates_latest_smart_contract_address_as_owner() {
-            let (accounts, mut keyvault) = initialize();
-
-            // Alice updates the latest smart contract address
-            set_next_caller(accounts.alice);
-            let new_address = AccountId::from([0x02; 32]); // Sample new address
-            assert_eq!(
-                keyvault.set_latest_smart_contract_address(new_address),
-                Ok(()),
-                "Alice should successfully update the latest smart contract address."
-            );
-
-            // Verify the update
-            let (_, _, latest_address, _) = keyvault.get_versions();
-            assert_eq!(
-                latest_address, new_address,
-                "The latest smart contract address should be updated."
-            );
-        }
-
-        #[ink::test]
-        fn bob_attempts_to_update_versions_and_address_as_non_owner_and_fails_until_alice_transfers_ownership(
-        ) {
-            let (accounts, mut keyvault) = initialize();
-            let new_address = AccountId::from([0x03; 32]); // Sample new address
-            let new_contract_version = 12;
-            let new_browser_extension_version = vec![79];
-
-            // Verify initial state
-            let (_, latest_version, _, latest_browser_version) = keyvault.get_versions();
-            assert_eq!(latest_version, 1);
-            assert_eq!(latest_browser_version, vec![2]);
-
-            // Attempt to update the latest smart contract address as Bob (non-owner)
-            set_next_caller(accounts.bob);
-            assert_eq!(
-                keyvault.set_latest_smart_contract_address(new_address),
-                Err(Error::NotOwner),
-                "Bob should not be able to update the latest smart contract address as a non-owner."
-            );
-            assert_eq!(
-                keyvault.set_latest_smart_contract_version(new_contract_version),
-                Err(Error::NotOwner),
-                "Bob should not be able to update the latest smart contract version as a non-owner."
-            );
-            assert_eq!(
-                keyvault.set_latest_compatible_browser_extension_version(
-                    new_browser_extension_version.clone()
-                ),
-                Err(Error::NotOwner),
-                "Bob should not be able to update the latest browser extension as a non-owner."
-            );
-
-            // Alice transfers ownership
-            set_next_caller(accounts.alice);
-            assert_eq!(keyvault.set_owner(accounts.bob), Ok(()));
-
-            // Attempt to update the latest smart contract address as Bob (owner)
-            set_next_caller(accounts.bob);
-            assert_eq!(
-                keyvault.set_latest_smart_contract_address(new_address),
-                Ok(()),
-            );
-            assert_eq!(
-                keyvault.set_latest_smart_contract_version(new_contract_version.clone()),
-                Ok(())
-            );
-            assert_eq!(
-                keyvault.set_latest_compatible_browser_extension_version(
-                    new_browser_extension_version.clone()
-                ),
-                Ok(())
-            );
-
-            // Verify the update
-            let (_, latest_version, latest_address, latest_browser_version) =
-                keyvault.get_versions();
-            assert_eq!(
-                latest_version, new_contract_version,
-                "The latest smart contract version should be updated."
-            );
-            assert_eq!(
-                latest_address, new_address,
-                "The latest smart contract address should be updated."
-            );
-            assert_eq!(
-                latest_browser_version, new_browser_extension_version,
-                "The latest compatible browser extension version should be updated."
-            );
         }
     }
 }

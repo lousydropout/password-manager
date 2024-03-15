@@ -49,7 +49,7 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
 
     let errored = false // used to emulate python's `else` part of try-except-else
     try {
-      await contractTxWithToast(api, activeAccount.address, contract, 'createAccount', {}, [true])
+      await contractTxWithToast(api, activeAccount.address, contract, 'createAccount', {}, [])
     } catch (e: unknown) {
       errored = true
       // check if account already exists

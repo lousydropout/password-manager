@@ -1,9 +1,7 @@
-import { AccountCreation } from '@/components/AccountCreation'
-import { AccountDashboard } from '@/components/AccountDashboard'
 import { ConnectButton } from '@/components/web3/ConnectButton'
 import { ContractIds } from '@/deployments/deployments'
-import { useSessionStorage } from '@/hooks/useSessionStorage'
-import { Heading, Text, VStack } from '@chakra-ui/react'
+import { useFiniteStateMachine } from '@/hooks/useFiniteStateMachine'
+import { Button, Heading, Input, Text, VStack } from '@chakra-ui/react'
 import { ContractOptions } from '@polkadot/api-contract/types'
 import { WeightV2 } from '@polkadot/types/interfaces'
 import { BN, BN_ONE } from '@polkadot/util'
@@ -24,27 +22,48 @@ export interface KeyVault {
 const MAX_CALL_WEIGHT = new BN(5_000_000_000_000).isub(BN_ONE)
 const PROOFSIZE = new BN(1_000_000)
 
-type States = 'home screen' | 'create or reset' | 'account dashboard'
+type States = 'HOME' | 'ACCOUNT_CREATE' | 'ACCOUNT_RESET' | 'ACCOUNT_DASHBOARD'
+const calculateNextState = (state: States, action: string) => state
 
 const HomePage: NextPage = () => {
   const { api, activeAccount, activeChain, activeSigner } = useInkathon()
   const { contract } = useRegisteredContract(ContractIds.KeyVault)
-  // for preventing premature passing-of-state and rendering
-  const [ready, setReady] = useSessionStorage<boolean>('ready', false)
-  const [keyvault, setKeyvault] = useState<KeyVault>({ createdAccount: false })
-  const [state, setState] = useState<States>('home screen')
-  const [numEntries, setNumEntries] = useSessionStorage<number>('numEntries', -1)
 
-  // read from sessionStorage
+  const [keyvault, setKeyvault] = useState<KeyVault>({ createdAccount: false })
+  const [keyName, setKeyName] = useState<string>('')
+
+  const [state, message, postMessage] = useFiniteStateMachine('HOME', calculateNextState)
+
+  // useEffect(() => {
+  //   const handleMessage = (event: MessageEvent) => {
+  //     console.log('[webapp] event: ', event.data)
+  //   }
+  //   window.addEventListener('message', handleMessage)
+  //   return () => {
+  //     window.removeEventListener('message', handleMessage)
+  //   }
+  // })
+
   useEffect(() => {
-    const storedData = window.sessionStorage.getItem('keyvault')
-    if (storedData) {
-      setKeyvault(JSON.parse(storedData))
-      setReady(true)
-    }
+    postMessage('TO_EXTENSION', 'REQUEST_CONTEXT', {})
   }, [])
 
-  const getNumberOfEntries = async () => {
+  useEffect(() => {
+    if (activeAccount?.address) {
+      console.log('address: ', activeAccount.address)
+      postMessage('TO_EXTENSION', 'UPDATE_CONTEXT', { walletAddress: activeAccount.address })
+    }
+  }, [activeAccount])
+
+  // read from sessionStorage
+  // useEffect(() => {
+  //   const storedData = window.sessionStorage.getItem('keyvault')
+  //   if (storedData) {
+  //     setKeyvault(JSON.parse(storedData))
+  //   }
+  // }, [])
+
+  const getEncryptionKeyHash = async () => {
     if (!api || !contract || !activeAccount) return
     const options: ContractOptions = {
       gasLimit: api.registry.createType('WeightV2', {
@@ -56,45 +75,56 @@ const HomePage: NextPage = () => {
 
     const result = await contractQuery(
       api,
-      activeAccount.address,
+      '',
       contract,
-      'get_entry_count_by_account_id',
+      'get_encryption_key_hash',
       options,
       // ['bbnuHav2YekNJM8GVYxzbKtgdq4eBUxyrgXyAJSReWRSzxj'],
       [activeAccount.address],
     )
-    // 2 approaches to get `num`
-    // 1st approach
-    // const num = result.output?.toHuman() as unknown as { Ok?: { Ok?: string; Err?: string } }
-    // console.log('[getNumberOfEntries] 1 -- num: ', num)
-    // if (num?.Ok?.Ok) setNumEntries(parseInt(num?.Ok.Ok))
-    // if (num?.Ok?.Err) console.error('Account not found!!!')
-    // const num
-
     // 2nd approach
     const { output, isError, decodedOutput } = decodeOutput(
       result,
       contract,
-      'get_entry_count_by_account_id',
+      'get_encryption_key_hash',
     )
-    console.log('output: ', output)
+    console.log('[getEncryptionKeyHash] output: ', output)
     if (isError) {
-      console.error('Account not found!!!\n', decodeOutput)
+      console.error('Account not found!!!\n', decodedOutput)
     } else {
-      const num = parseInt(output.Ok as unknown as string)
-      console.log('[getNumberOfEntries] num: ', num)
-      setNumEntries(num)
+      const encryptionHash = parseInt(output.Ok as unknown as string)
+      console.log('[getEncryptionKeyHash] encryptionHash: ', encryptionHash)
+      // setNumEntries(num)
     }
   }
 
+  // useEffect(() => {
+  //   if (api && contract && activeAccount?.address) {
+  //     getEncryptionKeyHash()
+  //   }
+  // }, [api, activeAccount, contract])
+
   useEffect(() => {
-    if (api && contract && activeAccount?.address) {
-      getNumberOfEntries()
-    }
-  }, [api, activeAccount, contract])
+    console.log('useEffect message: ', message)
+  }, [message])
 
   return (
     <VStack>
+      <Heading fontSize={'3xl'} my={4}>
+        Context: {JSON.stringify(message.context)}
+      </Heading>
+      <Input
+        onChange={(e) => {
+          setKeyName(e.target.value)
+        }}
+      />
+      <Button
+        onClick={() => {
+          postMessage('TO_EXTENSION', 'REQUEST', { newVar: keyName })
+        }}
+      >
+        Request random data
+      </Button>
       {/* connect wallet */}
       {!activeAccount && (
         <>
@@ -111,10 +141,14 @@ const HomePage: NextPage = () => {
           <ConnectButton />
         </>
       )}
-      {activeAccount && numEntries > -1 && <AccountDashboard />}
-      {activeAccount && numEntries < 0 && (
-        <AccountCreation keyvault={keyvault} setKeyvault={setKeyvault} />
-      )}
+      {
+        // activeAccount && numEntries > -1 && <AccountDashboard />
+      }
+      {
+        // activeAccount && numEntries < 0 && (
+        //   <AccountCreation keyvault={keyvault} setKeyvault={setKeyvault} />
+        // )
+      }
     </VStack>
   )
 }

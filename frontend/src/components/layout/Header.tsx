@@ -1,4 +1,5 @@
 import { ConnectButton } from '@/components/web3/ConnectButton'
+import { usePostMessages } from '@/hooks/usePostMessages'
 import { HamburgerIcon } from '@chakra-ui/icons'
 import { Link as ChakraLink } from '@chakra-ui/next-js'
 import {
@@ -17,6 +18,7 @@ import inkathonLogo from 'public/icons/icon48.png'
 
 export const Header = () => {
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const [, postMessage] = usePostMessages('action')
   const title = 'KeyVault'
 
   return (
@@ -49,7 +51,7 @@ export const Header = () => {
           <ChakraLink as={Link} href="/settings" fontSize={'1.25rem'}>
             Settings
           </ChakraLink>
-          <ConnectButton />
+          <ConnectButton disconnect={() => postMessage('TO_EXTENSION', 'DISCONNECT_WALLET', {})} />
         </HStack>
       </HStack>
 
@@ -117,7 +119,9 @@ export const Header = () => {
               />
             </HStack>
             <Divider m={0} />
-            <ConnectButton />
+            <ConnectButton
+              disconnect={() => postMessage('TO_EXTENSION', 'DISCONNECT_WALLET', {})}
+            />
 
             <ChakraLink
               as={Link}

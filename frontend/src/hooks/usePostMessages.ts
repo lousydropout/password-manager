@@ -32,6 +32,7 @@ export const usePostMessages = (
   const postMessage = useCallback(
     (type: MessageType, action: string, data: Record<string, any>) => {
       const value = { action, data }
+      setContext((prev) => ({ ...prev, context: { ...prev.context, ...data } }))
       window.postMessage({ type, channelId, channelName, key: channelName, value }, '*')
     },
     [channelId, channelName],

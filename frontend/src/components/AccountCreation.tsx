@@ -1,5 +1,4 @@
 import { ContractIds } from '@/deployments/deployments'
-import { KeyVault } from '@/pages'
 import { contractTxWithToast } from '@/utils/contractTxWithToast'
 import { truncateHash } from '@/utils/truncateHash'
 import { Link as ChakraLink } from '@chakra-ui/next-js'
@@ -15,29 +14,21 @@ import {
 } from '@chakra-ui/react'
 import { encodeAddress } from '@polkadot/util-crypto'
 import { useInkathon, useRegisteredContract } from '@scio-labs/use-inkathon'
-import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AccountName, ConnectButton } from './web3/ConnectButton'
 
 type AccountCreationPropsType = {
-  keyvault: KeyVault
-  setKeyvault: Dispatch<SetStateAction<KeyVault>>
+  context: Record<string, any>
+  postMessage: (type: 'TO_EXTENSION', action: string, context: Record<string, any>) => void
 }
 
-export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsType) => {
+export const AccountCreation = ({ context, postMessage }: AccountCreationPropsType) => {
   const { api, activeAccount, activeChain, activeSigner } = useInkathon()
   const connected = activeAccount?.address ? true : false
-  const [termsContent, setTermsContent] = useState('')
   const [isAgreed, setIsAgreed] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { contract } = useRegisteredContract(ContractIds.KeyVault)
   const [accountCreated, setAccountCreated] = useState<boolean>(false)
-
-  // get terms and conditions
-  useEffect(() => {
-    fetch('/terms.md')
-      .then((res) => res.text())
-      .then((text) => setTermsContent(text))
-  }, [])
 
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
@@ -49,7 +40,11 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
 
     let errored = false // used to emulate python's `else` part of try-except-else
     try {
-      await contractTxWithToast(api, activeAccount.address, contract, 'createAccount', {}, [])
+      await contractTxWithToast(api, activeAccount.address, contract, 'createAccount', {}, [
+        context.encryptionKeyHash,
+      ])
+      // `postMessage` will not be executed until after `await contractTxWithToast` is done
+      postMessage('TO_EXTENSION', 'ACCOUNT_CREATION_SUCCESS', {})
     } catch (e: unknown) {
       errored = true
       // check if account already exists
@@ -63,6 +58,7 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
       } else {
         console.error(e)
       }
+      postMessage('TO_EXTENSION', 'ACCOUNT_CREATION_FAILURE', {})
     } finally {
       setIsLoading(false)
       if (!errored) {
@@ -71,25 +67,14 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
     }
   }
 
-  const gotoDashboard = () => {
-    window.postMessage(
-      { type: 'ACCOUNT_CREATED', address: activeAccount?.address },
-      window.location.origin,
-    )
-    setKeyvault((prev) => ({ ...prev, createdAccount: true }))
-  }
-
   const TxSubmission = () => (
     <>
-      <Box textAlign="center" mb={16}>
-        <Heading size="3xl">Account Creation</Heading>
-      </Box>
       <Box my={4} textAlign="left">
         <form>
           {/* Wallet address */}
           <FormControl my={12}>
             <FormLabel>
-              <Heading size="lg">Creating an account for address:</Heading>
+              <Heading size="lg">Registering an account for address:</Heading>
             </FormLabel>
 
             {/* Make sure user is connected to wallet */}
@@ -150,35 +135,16 @@ export const AccountCreation = ({ keyvault, setKeyvault }: AccountCreationPropsT
             isLoading={isLoading}
             onClick={handleSubmit}
           >
-            Submit
+            Register Account
           </Button>
         </form>
       </Box>
     </>
   )
 
-  const CreationSuccessful = () => (
-    <>
-      <Box textAlign="center" mb={16}>
-        <Heading size="3xl">Your account has been successfully created!</Heading>
-      </Box>
-      <Button
-        width="full"
-        py={4}
-        my={8}
-        type="submit"
-        colorScheme="purple"
-        fontSize={'xl'}
-        onClick={gotoDashboard}
-      >
-        Go to dashboard
-      </Button>
-    </>
-  )
-
   return (
-    <Box p={12} border={'1px'} rounded={'2xl'}>
-      {accountCreated ? <CreationSuccessful /> : <TxSubmission />}
+    <Box px={12} py={4} border={'1px'} rounded={'2xl'}>
+      <TxSubmission />
     </Box>
   )
 }

@@ -33,13 +33,15 @@ import { AiOutlineCheckCircle, AiOutlineDisconnect } from 'react-icons/ai'
 import { FiChevronDown, FiExternalLink } from 'react-icons/fi'
 import 'twin.macro'
 
-export interface ConnectButtonProps {}
-export const ConnectButton: FC<ConnectButtonProps> = () => {
+export interface ConnectButtonProps {
+  disconnect?: (() => void) | undefined
+}
+export const ConnectButton: FC<ConnectButtonProps> = ({ disconnect: additionalDisconnect }) => {
   const {
     activeChain,
     switchActiveChain,
     connect,
-    disconnect,
+    disconnect: baseDisconnect,
     isConnecting,
     activeAccount,
     accounts,
@@ -52,6 +54,12 @@ export const ConnectButton: FC<ConnectButtonProps> = () => {
     allSubstrateWallets.filter((w) => w.platforms.includes(SubstrateWalletPlatform.Browser)),
   )
   const isSSR = useIsSSR()
+
+  // define disconnect
+  const disconnect = () => {
+    baseDisconnect?.()
+    additionalDisconnect?.()
+  }
 
   // Connect Button
   if (!activeAccount)

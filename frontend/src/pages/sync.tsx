@@ -27,7 +27,6 @@ const HomePage: NextPage = () => {
   const { api, activeAccount, activeChain, activeSigner } = useInkathon()
   const { contract } = useRegisteredContract(ContractIds.KeyVault)
   const [encrypted, setEncrypted] = useState<string[][]>([])
-  const [numEntries, setNumEntries] = useState<number>(-1)
   const [numOnChain, setNumOnChain] = useState<number>(-1)
   const [state, setState] = useState<'submitting' | 'submitted' | 'success' | 'failure'>(
     'submitting',
@@ -54,21 +53,13 @@ const HomePage: NextPage = () => {
     } else {
       const num = parseInt(output.Ok as unknown as string)
       console.log('[getNumberOfEntries] num: ', num)
-      setNumEntries(num)
+      setNumOnChain(num)
     }
   }
 
   useEffect(() => {
     if (!(api && contract && activeAccount?.address)) return
-
     getNumberOfEntries()
-
-    // get numOnChain from sessionStorage
-    const numOnChainString = sessionStorage.getItem('numOnChain')
-    if (numOnChainString) {
-      setNumOnChain(parseInt(numOnChainString))
-    }
-    console.log('numOnChain:', numOnChain)
 
     // get encrypted entries from sessionStorage
     let encryptedString: string | Encrypted[] | null = sessionStorage.getItem('encrypted')
@@ -116,10 +107,17 @@ const HomePage: NextPage = () => {
       <Heading fontSize={'3xl'} my={4} as={'pre'}>
         Sync credentials
       </Heading>
+      <Heading fontSize={'xl'} my={4} as={'pre'}>
+        Number of credentials to be synced: {encrypted.length - numOnChain}
+      </Heading>
 
       {state === 'submitting' && (
-        <CustomButton colorScheme="primary" onClick={handleSubmit}>
-          Sync
+        <CustomButton
+          colorScheme="primary"
+          onClick={handleSubmit}
+          isDisabled={encrypted.length <= numOnChain}
+        >
+          {encrypted.length <= numOnChain ? 'Already synced' : 'Sync'}
         </CustomButton>
       )}
 

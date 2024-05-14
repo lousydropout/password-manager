@@ -7,7 +7,7 @@ export interface CustomButtonProps extends ButtonProps {
 
 const CustomButton: React.FC<CustomButtonProps> = ({ colorScheme, children, ...rest }) => {
   return (
-    <Button {...colors[colorScheme]} {...rest} disabled>
+    <Button {...colors[colorScheme]} {...rest}>
       {children}
     </Button>
   )

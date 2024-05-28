@@ -147,7 +147,7 @@ mod keyvault {
             let attached_deposit = self.env().transferred_value();
 
             // make sure account does not already exist
-            if self.num_entries.get(&caller).is_some() {
+            if self.num_entries.get(caller).is_some() {
                 return Err(Error::AccountAlreadyExists);
             // make sure sufficient payment is sent
             } else if attached_deposit < self.fee {
@@ -156,8 +156,8 @@ mod keyvault {
             } else {
                 // set hash of encryption key
                 self.encryption_key_hash
-                    .insert(&caller, &encryption_key_hash);
-                self.num_entries.insert(&caller, &0);
+                    .insert(caller, &encryption_key_hash);
+                self.num_entries.insert(caller, &0);
             }
 
             // emit event
@@ -168,10 +168,11 @@ mod keyvault {
         /// Retrieves the hash of the encryption key of an AccountId
         #[ink(message)]
         pub fn get_encryption_key_hash(&self, account_id: AccountId) -> Result<Vec<u8>> {
-            Ok(self
+            let result = self
                 .encryption_key_hash
-                .get(&account_id)
-                .ok_or(Error::AccountNotFound)?)
+                .get(account_id)
+                .ok_or(Error::AccountNotFound)?;
+            Ok(result)
         }
 
         /// Adds a new encrypted entry for the caller, ensuring sequential order.
@@ -187,7 +188,7 @@ mod keyvault {
             // Check if the account exists
             let current_index = self
                 .num_entries
-                .get(&caller)
+                .get(caller)
                 .ok_or(Error::AccountNotFound)?;
 
             if expected_index != current_index {
@@ -197,12 +198,13 @@ mod keyvault {
             let key = Self::construct_key(caller, expected_index);
             self.entries
                 .insert(&key, &EncryptedEntry { iv, ciphertext });
-            self.num_entries.insert(&caller, &(current_index + 1));
+            let num_entries = current_index.checked_add(1).expect("Overflow occurred.");
+            self.num_entries.insert(caller, &num_entries);
 
             // emit event
             Self::env().emit_event(AddedEntry {
                 user: caller,
-                num_entries: current_index + 1,
+                num_entries,
             });
             Ok(())
         }
@@ -219,7 +221,7 @@ mod keyvault {
             // Check if the account exists
             let current_index = self
                 .num_entries
-                .get(&caller)
+                .get(caller)
                 .ok_or(Error::AccountNotFound)?;
 
             if expected_index != current_index {
@@ -230,19 +232,21 @@ mod keyvault {
 
             // `entries` is assumed to be a vector of (iv, ciphertext)
             for (i, (iv, ciphertext)) in entries.into_iter().enumerate() {
-                let key = Self::construct_key(caller, current_index + i as u32);
+                let idx = current_index.checked_add(i as u32).expect("Overflow occurred.");
+                let key = Self::construct_key(caller, idx);
                 self.entries
                     .insert(&key, &EncryptedEntry { iv, ciphertext });
             }
 
             // Update `num_entries` for the caller after all entries have been added
+            let num_entries = current_index.checked_add(entries_len).expect("Overflow occurred.");
             self.num_entries
-                .insert(&caller, &(current_index + entries_len));
+                .insert(caller, &num_entries);
 
             // emit event
             Self::env().emit_event(AddedEntry {
                 user: caller,
-                num_entries: current_index + entries_len,
+                num_entries,
             });
 
             Ok(())
@@ -252,7 +256,7 @@ mod keyvault {
         #[ink(message)]
         pub fn get_entry_count(&self, account_id: AccountId) -> Result<u32> {
             self.num_entries
-                .get(&account_id)
+                .get(account_id)
                 .ok_or(Error::AccountNotFound)
         }
 
@@ -261,14 +265,14 @@ mod keyvault {
         pub fn get_entry(&self, account_id: AccountId, index: u32) -> Result<EncryptedEntry> {
             let num = self
                 .num_entries
-                .get(&account_id)
+                .get(account_id)
                 .ok_or(Error::AccountNotFound)?;
             if index >= num {
                 return Err(Error::IndexMismatch);
             }
 
             let key = Self::construct_key(account_id, index);
-            self.entries.get(&key).ok_or(Error::AccountNotFound)
+            self.entries.get(key).ok_or(Error::AccountNotFound)
         }
 
         fn min(&self, a: u32, b: u32) -> u32 {
@@ -289,14 +293,15 @@ mod keyvault {
         ) -> Result<Vec<EncryptedEntry>> {
             let num = self
                 .num_entries
-                .get(&account_id)
+                .get(account_id)
                 .ok_or(Error::AccountNotFound)?;
             if start_index >= num {
                 return Err(Error::IndexMismatch);
             }
 
             let mut results = Vec::new();
-            for index in start_index..self.min(num, start_index + max_num) {
+            let last_index = start_index.checked_add(max_num).expect("Overflow occurred.");
+            for index in start_index..self.min(num, last_index) {
                 let key = Self::construct_key(account_id, index);
                 let entry = self.entries.get(&key).ok_or(Error::AccountNotFound)?;
                 results.push(entry);
@@ -307,20 +312,17 @@ mod keyvault {
 
         /// Resets the caller's account, setting their entry count to zero.
         #[ink(message)]
-        pub fn reset_account(&mut self, iv: Vec<u8>, ciphertext: Vec<u8>) -> Result<()> {
+        pub fn reset_account(&mut self, encryption_key_hash: Vec<u8>) -> Result<()> {
             let caller = self.env().caller();
 
             let _num_entries = self
                 .num_entries
-                .get(&caller)
+                .get(caller)
                 .ok_or(Error::AccountNotFound)?;
 
-            // insert 1st encrypted entry
-            // this entry is meant to not contain any particular information
-            let key = Self::construct_key(caller, 0);
-            self.entries
-                .insert(&key, &EncryptedEntry { iv, ciphertext });
-            self.num_entries.insert(&caller, &1);
+            // insert encryption key hash
+            self.encryption_key_hash.insert(caller, &encryption_key_hash);
+            self.num_entries.insert(caller, &0);
             Ok(())
         }
 
@@ -348,7 +350,7 @@ mod keyvault {
         pub fn get_versions(&self) -> (u8, u8, AccountId, u32) {
             (
                 VERSION,
-                self.latest_smart_contract_version.clone(),
+                self.latest_smart_contract_version,
                 self.latest_smart_contract_address
                     .unwrap_or_else(|| self.env().account_id()),
                 self.latest_compatible_browser_extension_version,

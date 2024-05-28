@@ -24,17 +24,17 @@ export const Header = () => {
   return (
     <Box>
       <HStack justifyContent="space-between" px={8} py={4} display={{ base: 'none', sm: 'flex' }}>
-        <ChakraLink
+        {/* <ChakraLink
           as={Link}
           href="/"
           className="group"
           style={{ alignItems: 'center', gap: '16px' }}
           display={{ base: 'none', md: 'flex' }}
-        >
-          <Heading as={'h1'} color="purple.400" style={{ fontSize: '2.5rem' }}>
-            {title}
-          </Heading>
-        </ChakraLink>
+        > */}
+        <Heading as={'h1'} color="purple.400" style={{ fontSize: '2.5rem' }}>
+          {title}
+        </Heading>
+        {/* </ChakraLink> */}
         <ChakraLink
           as={Link}
           href="/"
@@ -48,9 +48,9 @@ export const Header = () => {
         <div tw="flex-grow"></div>
 
         <HStack gap={8}>
-          <ChakraLink as={Link} href="/settings" fontSize={'1.25rem'}>
+          {/* <ChakraLink as={Link} href="/settings" fontSize={'1.25rem'}>
             Settings
-          </ChakraLink>
+          </ChakraLink> */}
           <ConnectButton disconnect={() => postMessage('TO_EXTENSION', 'DISCONNECT_WALLET', {})} />
         </HStack>
       </HStack>

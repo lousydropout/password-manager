@@ -1,4 +1,5 @@
 import { AccountCreation } from '@/components/AccountCreation'
+import { AccountReset } from '@/components/AccountReset'
 import { ConnectButton } from '@/components/web3/ConnectButton'
 import { ContractIds } from '@/deployments/deployments'
 import { useFiniteStateMachine } from '@/hooks/useFiniteStateMachine'
@@ -37,27 +38,7 @@ type Action =
   | 'FOUND_ACCOUNT'
   | 'ACCOUNT_IMPORT_SUCCESS'
   | 'DISCONNECT_WALLET'
-
-async function queryData(method: string, queryParams: Record<string, any>): Promise<unknown> {
-  const apiUrl = 'https://keyvault-query.lousydropout.com'
-
-  // Constructing query string from query params object
-  const queryString = new URLSearchParams(queryParams).toString()
-
-  // Constructing final URL with query string
-  const url = `${apiUrl}/${method}?${queryString}`
-
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error('Network response was not ok.')
-  }
-
-  const data = await response.json()
-  console.log('Data received:', data)
-  console.log('Data.Ok received:', data.Ok)
-  return data.Ok
-}
+  | 'ACCOUNT_RESET_REQUESTED'
 
 const calculateNextState = (state: State, action: string, context: Record<string, any>): State => {
   console.debug('[calculateNextState] state, action: ', state, action)
@@ -76,6 +57,9 @@ const calculateNextState = (state: State, action: string, context: Record<string
 
     case 'ACCOUNT_IMPORT_SUCCESS':
       return 'ACCOUNT_DASHBOARD'
+
+    case 'ACCOUNT_RESET_REQUESTED':
+      return 'ACCOUNT_RESET'
 
     default:
       console.warn('[calculateNextState] unhandled action: ', action)
@@ -96,12 +80,16 @@ const HomePage: NextPage = () => {
   }, [])
 
   useEffect(() => {
+    if (context.reset) setState('ACCOUNT_RESET')
+  }, [context.reset])
+
+  useEffect(() => {
     if (activeAccount?.address) {
       console.log('address: ', activeAccount.address)
       postMessage('TO_EXTENSION', 'UPDATE_CONTEXT', { walletAddress: activeAccount.address })
       getEncryptionKeyHash()
     }
-  }, [activeAccount])
+  }, [activeAccount?.address])
 
   const getEncryptionKeyHash = async () => {
     if (!api || !contract || !activeAccount) return
@@ -139,6 +127,7 @@ const HomePage: NextPage = () => {
           createdAccount: true,
           correctKey: true,
           encryptionKeyHash: encryptionHash,
+          oldEncryptionKeyHash: encryptionHash,
         })
       }
     }
@@ -185,6 +174,25 @@ const HomePage: NextPage = () => {
     </>
   )
 
+  const AccountResetPage = () => (
+    <>
+      <Heading textAlign={'center'} size="3xl">
+        Account Reset
+      </Heading>
+
+      <Heading my={4} fontSize={'2xl'} maxWidth={'3xl'}>
+        Are you sure you want to reset your account (address
+        {truncateHash(
+          encodeAddress(activeAccount?.address || '', activeChain?.ss58Prefix || 42),
+          8,
+        )}
+        )? This will effectively delete your passwords and reset encryption key.
+      </Heading>
+
+      <AccountReset context={context} postMessage={postMessage} />
+    </>
+  )
+
   const AccountFound = () => {
     return (
       <>
@@ -208,11 +216,8 @@ const HomePage: NextPage = () => {
       {state === 'ACCOUNT_DASHBOARD' && (
         <h1>Your account registration/import was successful. You may close this tab now.</h1>
       )}
-      {
-        // activeAccount && numEntries < 0 && (
-        //   <AccountCreation keyvault={keyvault} setKeyvault={setKeyvault} />
-        // )
-      }
+      {state === 'ACCOUNT_RESET' && activeAccount && <AccountResetPage />}
+
       <Heading fontSize={'3xl'} my={4} as={'pre'}>
         State: {state}
       </Heading>

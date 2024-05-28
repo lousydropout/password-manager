@@ -34,12 +34,12 @@ const HomePage: NextPage = () => {
   const [keyvault, setKeyvault] = useState<KeyVault>({ createdAccount: false })
   const [state, setState] = useState<States>('home screen')
   const [numEntries, setNumEntries] = useSessionStorage<number>('numEntries', -1)
-  const [_walletAddress, postWalletAddress] = usePostMessages<string>('walletAddress')
-  const [, postAccountCreationStatus] = usePostMessages<string>('accountCreationStatus')
+  const [_walletAddress, postWalletAddress] = usePostMessages('walletAddress')
+  const [, postAccountCreationStatus] = usePostMessages('accountCreationStatus')
 
   useEffect(() => {
     if (activeAccount?.address) {
-      postWalletAddress(activeAccount.address)
+      postWalletAddress('TO_EXTENSION', 'FOUND_ADDRESS', { accountAddress: activeAccount.address })
     }
   }, [activeAccount])
 

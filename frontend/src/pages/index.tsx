@@ -37,6 +37,7 @@ type Action =
   | 'FOUND_NO_ACCOUNT'
   | 'FOUND_ACCOUNT'
   | 'ACCOUNT_IMPORT_SUCCESS'
+  | 'ACCOUNT_RESET_SUCCESS'
   | 'DISCONNECT_WALLET'
   | 'ACCOUNT_RESET_REQUESTED'
 
@@ -56,6 +57,7 @@ const calculateNextState = (state: State, action: string, context: Record<string
       return 'ACCOUNT_FOUND'
 
     case 'ACCOUNT_IMPORT_SUCCESS':
+    case 'ACCOUNT_RESET_SUCCESS':
       return 'ACCOUNT_DASHBOARD'
 
     case 'ACCOUNT_RESET_REQUESTED':
@@ -74,6 +76,10 @@ const HomePage: NextPage = () => {
     'HOME',
     calculateNextState,
   )
+
+  useEffect(() => {
+    console.log('[HomePage] state: ', state)
+  }, [state])
 
   useEffect(() => {
     postMessage('TO_EXTENSION', 'REQUEST_CONTEXT', {})
@@ -114,6 +120,7 @@ const HomePage: NextPage = () => {
     if (isError) {
       console.error('Account not found!!!\n', decodedOutput)
       postMessage('TO_EXTENSION', 'FOUND_NO_ACCOUNT', { createdAccount: false })
+      setState('ACCOUNT_CREATE')
     } else {
       const encryptionHash = output.Ok as unknown as string
       console.log('[getEncryptionKeyHash] encryptionHash: ', encryptionHash)

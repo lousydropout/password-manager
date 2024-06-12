@@ -137,13 +137,12 @@ const HomePage: NextPage = () => {
         postMessage('TO_EXTENSION', 'FOUND_ACCOUNT', {
           createdAccount: true,
           correctKey,
-          encryptionKeyHash: encryptionHash,
+          oldEncryptionKeyHash: encryptionHash,
         })
       } else {
         postMessage('TO_EXTENSION', 'FOUND_ACCOUNT', {
           createdAccount: true,
           correctKey: true,
-          encryptionKeyHash: encryptionHash,
           oldEncryptionKeyHash: encryptionHash,
         })
       }

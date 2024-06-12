@@ -1,3 +1,4 @@
+import { AccountName, ConnectButton } from '@/components/web3/ConnectButton'
 import { ContractIds } from '@/deployments/deployments'
 import { contractTxWithToast } from '@/utils/contractTxWithToast'
 import { truncateHash } from '@/utils/truncateHash'
@@ -5,7 +6,6 @@ import { Box, Button, FormControl, FormLabel, HStack, Heading, Text } from '@cha
 import { encodeAddress } from '@polkadot/util-crypto'
 import { useInkathon, useRegisteredContract } from '@scio-labs/use-inkathon'
 import { useState } from 'react'
-import { AccountName, ConnectButton } from './web3/ConnectButton'
 
 type AccountResetPropsType = {
   context: Record<string, any>

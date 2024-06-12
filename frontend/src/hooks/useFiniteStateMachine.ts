@@ -1,6 +1,6 @@
+import { usePostMessages } from '@/hooks/usePostMessages'
+import { useSessionStorage } from '@/hooks/useSessionStorage'
 import { Dispatch, SetStateAction, useEffect } from 'react'
-import { usePostMessages } from './usePostMessages'
-import { useSessionStorage } from './useSessionStorage'
 
 type MessageType = 'TO_EXTENSION'
 

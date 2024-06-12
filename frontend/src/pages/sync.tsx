@@ -1,5 +1,6 @@
 import { CustomButton } from '@/components/CustomButton'
 import { ContractIds } from '@/deployments/deployments'
+import { usePostMessages } from '@/hooks/usePostMessages'
 import { contractTxWithToast } from '@/utils/contractTxWithToast'
 import { Heading, VStack } from '@chakra-ui/react'
 import { ContractOptions } from '@polkadot/api-contract/types'
@@ -31,6 +32,7 @@ const HomePage: NextPage = () => {
   const [state, setState] = useState<'submitting' | 'submitted' | 'success' | 'failure'>(
     'submitting',
   )
+  const [, postMessage] = usePostMessages('action')
 
   const getNumberOfEntries = async () => {
     if (!api || !contract || !activeAccount) return
@@ -83,6 +85,9 @@ const HomePage: NextPage = () => {
       return
     }
 
+    // Assumption: encrypted[0..numOnChain] are already on-chain
+    //      and so need to sync encrypted[numOnChain..]
+    // TODO: remove this assumption
     if (encrypted.slice(numOnChain).length === 0) {
       console.log('No new entries to sync')
       setState('success')
@@ -95,6 +100,8 @@ const HomePage: NextPage = () => {
         numOnChain,
         encrypted.slice(numOnChain),
       ])
+      postMessage('TO_EXTENSION', 'SYNC_SUCCESS', { numOnChain: encrypted.length })
+      console.log("Posted message 'SYNC_SUCCESS'")
       setState('success')
     } catch (e) {
       console.error('handleSubmit Error: ', e)

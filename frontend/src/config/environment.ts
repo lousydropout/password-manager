@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { getSupportedChains } from './getSupportedChains'
-import { getURL } from './getUrl'
+import { getSupportedChains } from '@/config/getSupportedChains'
+import { getURL } from '@/config/getUrl'
 
 /**
  * Environment Variables defined in `.env.local`.

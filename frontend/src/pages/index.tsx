@@ -92,7 +92,13 @@ const HomePage: NextPage = () => {
   useEffect(() => {
     if (activeAccount?.address) {
       console.log('address: ', activeAccount.address)
-      postMessage('TO_EXTENSION', 'UPDATE_CONTEXT', { walletAddress: activeAccount.address })
+      postMessage('TO_EXTENSION', 'UPDATE_CONTEXT', {
+        walletAddress: activeAccount.address,
+        truncatedAddress: truncateHash(
+          encodeAddress(activeAccount.address, activeChain?.ss58Prefix || 42),
+          8,
+        ),
+      })
       getEncryptionKeyHash()
     }
   }, [activeAccount?.address])
@@ -127,8 +133,12 @@ const HomePage: NextPage = () => {
 
       let correctKey: boolean
       if ('encryptionKeyHash' in context) {
-        correctKey = encryptionHash === context['encryptionKeyHash']
-        postMessage('TO_EXTENSION', 'FOUND_ACCOUNT', { createdAccount: true, correctKey })
+        correctKey = encryptionHash === context.encryptionKeyHash
+        postMessage('TO_EXTENSION', 'FOUND_ACCOUNT', {
+          createdAccount: true,
+          correctKey,
+          encryptionKeyHash: encryptionHash,
+        })
       } else {
         postMessage('TO_EXTENSION', 'FOUND_ACCOUNT', {
           createdAccount: true,
@@ -141,10 +151,12 @@ const HomePage: NextPage = () => {
   }
 
   useEffect(() => {
+    console.log('[HomePage] activeAccount: ', activeAccount)
     if (api && contract && activeAccount?.address) {
+      console.log('[HomePage] address: ', activeAccount?.address)
       getEncryptionKeyHash()
     }
-  }, [api, activeAccount, contract])
+  }, [api, activeAccount, contract, activeAccount?.address])
 
   const Home = () => (
     <>

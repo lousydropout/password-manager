@@ -48,9 +48,6 @@ export const Header = () => {
         <div tw="flex-grow"></div>
 
         <HStack gap={8}>
-          {/* <ChakraLink as={Link} href="/settings" fontSize={'1.25rem'}>
-            Settings
-          </ChakraLink> */}
           <ConnectButton disconnect={() => postMessage('TO_EXTENSION', 'DISCONNECT_WALLET', {})} />
         </HStack>
       </HStack>
@@ -122,22 +119,6 @@ export const Header = () => {
             <ConnectButton
               disconnect={() => postMessage('TO_EXTENSION', 'DISCONNECT_WALLET', {})}
             />
-
-            <ChakraLink
-              as={Link}
-              href="/settings"
-              color={'white'}
-              _hover={{ backgroundColor: 'rgb(61 61 61)' }}
-              px={14}
-              rounded={'2xl'}
-              py={2}
-              border={'1px'}
-              borderColor={'black'}
-              fontSize={'2xl'}
-              onClick={onClose}
-            >
-              Settings
-            </ChakraLink>
           </VStack>
         )}
       </Box>

@@ -1,10 +1,9 @@
 import { AccountCreation } from '@/components/AccountCreation'
 import { AccountReset } from '@/components/AccountReset'
-import { ConnectButton } from '@/components/web3/ConnectButton'
 import { ContractIds } from '@/deployments/deployments'
 import { useFiniteStateMachine } from '@/hooks/useFiniteStateMachine'
 import { truncateHash } from '@/utils/truncateHash'
-import { Heading, Text, VStack } from '@chakra-ui/react'
+import { Heading, VStack } from '@chakra-ui/react'
 import { ContractOptions } from '@polkadot/api-contract/types'
 import { WeightV2 } from '@polkadot/types/interfaces'
 import { BN, BN_ONE } from '@polkadot/util'
@@ -78,10 +77,6 @@ const HomePage: NextPage = () => {
   )
 
   useEffect(() => {
-    console.log('[HomePage] state: ', state)
-  }, [state])
-
-  useEffect(() => {
     postMessage('TO_EXTENSION', 'REQUEST_CONTEXT', {})
   }, [])
 
@@ -91,7 +86,6 @@ const HomePage: NextPage = () => {
 
   useEffect(() => {
     if (activeAccount?.address) {
-      console.log('address: ', activeAccount.address)
       postMessage('TO_EXTENSION', 'UPDATE_CONTEXT', {
         walletAddress: activeAccount.address,
         truncatedAddress: truncateHash(
@@ -122,14 +116,11 @@ const HomePage: NextPage = () => {
       contract,
       'get_encryption_key_hash',
     )
-    console.log('[getEncryptionKeyHash] output: ', output)
     if (isError) {
-      console.error('Account not found!!!\n', decodedOutput)
       postMessage('TO_EXTENSION', 'FOUND_NO_ACCOUNT', { createdAccount: false })
       setState('ACCOUNT_CREATE')
     } else {
       const encryptionHash = output.Ok as unknown as string
-      console.log('[getEncryptionKeyHash] encryptionHash: ', encryptionHash)
 
       let correctKey: boolean
       if ('encryptionKeyHash' in context) {
@@ -150,9 +141,7 @@ const HomePage: NextPage = () => {
   }
 
   useEffect(() => {
-    console.log('[HomePage] activeAccount: ', activeAccount)
     if (api && contract && activeAccount?.address) {
-      console.log('[HomePage] address: ', activeAccount?.address)
       getEncryptionKeyHash()
     }
   }, [api, activeAccount, contract, activeAccount?.address])
@@ -166,10 +155,6 @@ const HomePage: NextPage = () => {
         KeyVault is a password manager secured by blockchain and military-grade cryptography,
         meaning your passwords are in safe hands!
       </Heading>
-      <Text fontSize={'3xl'} mb={8}>
-        Before we begin, please connect to your preferred substrate wallet.
-      </Text>
-      <ConnectButton disconnect={() => postMessage('TO_EXTENSION', 'DISCONNECT_WALLET', {})} />
     </>
   )
 
@@ -235,14 +220,6 @@ const HomePage: NextPage = () => {
         <h1>Your account registration/import was successful. You may close this tab now.</h1>
       )}
       {state === 'ACCOUNT_RESET' && activeAccount && <AccountResetPage />}
-
-      <Heading fontSize={'3xl'} my={4} as={'pre'}>
-        State: {state}
-      </Heading>
-      <Heading fontSize={'3xl'} my={4} as={'pre'}>
-        Context: {'\n'}
-        {JSON.stringify(context, null, 2)}
-      </Heading>
     </VStack>
   )
 }

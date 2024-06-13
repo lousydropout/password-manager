@@ -48,8 +48,6 @@ export const usePostMessages = (
         message.type === 'FROM_EXTENSION' &&
         message.channelName === channelName
       ) {
-        console.debug(`[handleMessage ${channelName}] message: `, message)
-
         if (message.overwrite) {
           setContext({ action: message.action, context: message.data })
         } else {

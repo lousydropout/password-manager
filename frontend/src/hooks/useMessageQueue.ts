@@ -40,7 +40,6 @@ export const useMessageQueue = <T>(
     if (!listening) return // Stop listening if not required
 
     const interval = setInterval(() => {
-      console.log(`[${varName}] listening...`)
       const sessionIdx = parseInt(sessionStorage.getItem(`${varName}-idx`) || '0', 10)
       const newMessages: T[] = []
       for (let k = idx; k < sessionIdx; k++) {

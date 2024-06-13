@@ -49,12 +49,10 @@ const HomePage: NextPage = () => {
     ])
 
     const { output, isError, decodedOutput } = decodeOutput(result, contract, 'get_entry_count')
-    console.log('output: ', output)
     if (isError) {
       console.error('Account not found!!!\n', decodeOutput)
     } else {
       const num = parseInt(output.Ok as unknown as string)
-      console.log('[getNumberOfEntries] num: ', num)
       setNumOnChain(num)
     }
   }
@@ -72,10 +70,8 @@ const HomePage: NextPage = () => {
     }
 
     if (encryptedString) {
-      console.log('encryptedString:', typeof encryptedString, encryptedString)
       const encryptedArray = encryptedString.map((entry: Encrypted) => [entry.iv, entry.ciphertext])
       setEncrypted(encryptedArray)
-      console.log('encryptedArray:', encryptedArray)
     }
   }, [api, activeAccount, contract])
 
@@ -89,19 +85,16 @@ const HomePage: NextPage = () => {
     //      and so need to sync encrypted[numOnChain..]
     // TODO: remove this assumption
     if (encrypted.slice(numOnChain).length === 0) {
-      console.log('No new entries to sync')
       setState('success')
       return
     }
 
     try {
-      console.log('numOnChain:', numOnChain, encrypted.slice(numOnChain))
       await contractTxWithToast(api, activeAccount.address, contract, 'addEntries', {}, [
         numOnChain,
         encrypted.slice(numOnChain),
       ])
       postMessage('TO_EXTENSION', 'SYNC_SUCCESS', { numOnChain: encrypted.length })
-      console.log("Posted message 'SYNC_SUCCESS'")
       setState('success')
     } catch (e) {
       console.error('handleSubmit Error: ', e)

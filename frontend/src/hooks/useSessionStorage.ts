@@ -6,7 +6,6 @@ function useSessionStorage<T>(key: string, defaultValue: T): [T, Dispatch<SetSta
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      console.log('useEffect with [key, defaultValue]')
       // Attempt to get the stored value from session storage.
       // Parse the stored JSON string back into a TypeScript value of type T.
       const stored = window.sessionStorage.getItem(key)

@@ -26,13 +26,3 @@ export function filterUpToDateItems(data: MyDict[]): MyDict[] {
 
   return upToDateItems
 }
-// const data: MyDict[] = [
-//   { val: "item1", idx: -1 },
-//   { val: "item2", idx: -1 },
-//   { val: "updated_item3", idx: 1 },
-//   { val: "item4", idx: -1 },
-//   { val: "updated_item5", idx: 3 },
-// ];
-
-// const upToDateItems: MyDict[] = filterUpToDateItems(data);
-// console.log(upToDateItems);

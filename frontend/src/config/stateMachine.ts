@@ -18,6 +18,7 @@ export const calculateNextState = (
   action: string,
   context: Record<string, any>,
 ): State => {
+  let newState: State
   switch (action as Action) {
     case 'DISCONNECT_WALLET':
       console.debug(`[stateMachine] ${action}: ${state} -> HOME`)
@@ -28,9 +29,8 @@ export const calculateNextState = (
       return state
 
     case 'FOUND_NO_ACCOUNT':
-      const newState = state === 'HOME' ? 'ACCOUNT_CREATE' : state
+      newState = state === 'HOME' ? 'ACCOUNT_CREATE' : state
       console.debug(`[stateMachine] ${action}: ${state} -> ${newState}`)
-
       return newState
 
     case 'FOUND_ACCOUNT':

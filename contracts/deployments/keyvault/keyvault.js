@@ -1,11 +1,11 @@
 export const metadata = {
   "source": {
-    "hash": "0xbdaafa028bdc0fc9ea2406e52b78b10e237d466baf7a179dcbecc1f388e0cac4",
+    "hash": "0xeefc7850e26115746eebc0bc2c082f041f164b5fa94b0a7a077c6950236f9e6c",
     "language": "ink! 4.3.0",
     "compiler": "rustc 1.78.0",
     "build_info": {
       "build_mode": "Release",
-      "cargo_contract_version": "4.1.1",
+      "cargo_contract_version": "2.2.1",
       "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
       "wasm_opt_settings": {
         "keep_debug_symbols": false,
@@ -20,7 +20,6 @@ export const metadata = {
       "lousydropout <lousydropout@gmail.com>"
     ]
   },
-  "image": null,
   "spec": {
     "constructors": [
       {
@@ -107,9 +106,7 @@ export const metadata = {
             "indexed": false,
             "label": "user",
             "type": {
-              "displayName": [
-                "AccountId"
-              ],
+              "displayName": [],
               "type": 0
             }
           }
@@ -129,9 +126,7 @@ export const metadata = {
             "indexed": false,
             "label": "user",
             "type": {
-              "displayName": [
-                "AccountId"
-              ],
+              "displayName": [],
               "type": 0
             }
           },
@@ -140,9 +135,7 @@ export const metadata = {
             "indexed": false,
             "label": "num_entries",
             "type": {
-              "displayName": [
-                "u32"
-              ],
+              "displayName": [],
               "type": 14
             }
           }
@@ -709,11 +702,11 @@ export const metadata = {
                 "root": {
                   "layout": {
                     "leaf": {
-                      "key": "0x56a0ea45",
+                      "key": "0x45eaa056",
                       "ty": 4
                     }
                   },
-                  "root_key": "0x56a0ea45",
+                  "root_key": "0x45eaa056",
                   "ty": 5
                 }
               },
@@ -728,7 +721,7 @@ export const metadata = {
                         {
                           "layout": {
                             "leaf": {
-                              "key": "0xe4f7e88d",
+                              "key": "0x8de8f7e4",
                               "ty": 4
                             }
                           },
@@ -737,7 +730,7 @@ export const metadata = {
                         {
                           "layout": {
                             "leaf": {
-                              "key": "0xe4f7e88d",
+                              "key": "0x8de8f7e4",
                               "ty": 4
                             }
                           },
@@ -747,7 +740,7 @@ export const metadata = {
                       "name": "EncryptedEntry"
                     }
                   },
-                  "root_key": "0xe4f7e88d",
+                  "root_key": "0x8de8f7e4",
                   "ty": 10
                 }
               },
@@ -758,11 +751,11 @@ export const metadata = {
                 "root": {
                   "layout": {
                     "leaf": {
-                      "key": "0xd0cf3d29",
+                      "key": "0x293dcfd0",
                       "ty": 14
                     }
                   },
-                  "root_key": "0xd0cf3d29",
+                  "root_key": "0x293dcfd0",
                   "ty": 15
                 }
               },
@@ -2052,5 +2045,5 @@ export const metadata = {
       }
     }
   ],
-  "version": 5
-};
+  "version": "4"
+}

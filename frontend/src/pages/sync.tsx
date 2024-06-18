@@ -33,6 +33,7 @@ const HomePage: NextPage = () => {
     'submitting',
   )
   const [, postMessage] = usePostMessages('action')
+  const [sent, setSent] = useState<boolean>(false)
 
   const getNumberOfEntries = async () => {
     if (!api || !contract || !activeAccount) return
@@ -90,6 +91,7 @@ const HomePage: NextPage = () => {
     }
 
     try {
+      setSent(true)
       await contractTxWithToast(api, activeAccount.address, contract, 'addEntries', {}, [
         numOnChain,
         encrypted.slice(numOnChain),
@@ -100,6 +102,7 @@ const HomePage: NextPage = () => {
       console.error('handleSubmit Error: ', e)
       setState('failure')
     }
+    setSent(false)
   }
 
   return (
@@ -115,7 +118,7 @@ const HomePage: NextPage = () => {
         <CustomButton
           colorScheme="primary"
           onClick={handleSubmit}
-          isDisabled={encrypted.length <= numOnChain}
+          isDisabled={sent || encrypted.length <= numOnChain}
         >
           {encrypted.length <= numOnChain ? 'Already synced' : 'Sync'}
         </CustomButton>

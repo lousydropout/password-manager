@@ -6,8 +6,7 @@ Further, a blockchain-based `password manager` is also distributed and decentral
 
 ## A few details
 
-- **frontend url:** https://dev.blockchainkeyvault.com
-- **smart contract address:** VwSS9BGfuHHjMjukTVPWPdoMkJ7TwNxJURSZUBEhGKF1py2 (https://shibuya.subscan.io/account/VwSS9BGfuHHjMjukTVPWPdoMkJ7TwNxJURSZUBEhGKF1py2)
+- **smart contract address:** aPzdpNwZkoHEMezBoFno9Tj2KVJvxe5Hma2W4RcYXfhp1Rm (https://astar.subscan.io/account/aPzdpNwZkoHEMezBoFno9Tj2KVJvxe5Hma2W4RcYXfhp1Rm)
 - **network:** Shibuya
 - **smart contract code:** https://github.com/lousydropout/password-manager/blob/main/contracts/src/keyvault/lib.rs
 - **helper cryptography code:** https://github.com/lousydropout/password-manager/blob/main/frontend/src/utils/crypto.ts
